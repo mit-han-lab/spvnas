@@ -2,9 +2,18 @@
 
 We open source e3d: Efficient Methods for 3D Deep Learning, a repository containing our recent advances in efficient 3D point cloud understanding.
 
+<img src="https://hanlab.mit.edu/projects/spvnas/figures/overview.png" width="1080">
 
 
-**[NEW!!]** Please check out our ECCV 2020 tutorial on [AutoML for Efficient 3D Deep Learning](https://www.youtube.com/watch?v=zzJR07LMXxs), which summarizes the methods released in this codebase.
+## News
+
+**[2020-08]** Please check out our ECCV 2020 tutorial on [AutoML for Efficient 3D Deep Learning](https://www.youtube.com/watch?v=zzJR07LMXxs), which summarizes the methods released in this codebase.
+
+**[2020-07]** Our [paper](https://arxiv.org/abs/2007.16100) Searching Efficient 3D Architectures with Sparse Point-Voxel Convolution is accepted to ECCV 2020.
+
+**[2020-03]** Our work [PVCNN](https://arxiv.org/abs/1907.03739) is deployed on MIT Driverless racing cars, please check of this [video](https://www.youtube.com/watch?v=WW9paispAW0).
+
+**[2019-12]** We give the spotlight talk of [PVCNN](https://arxiv.org/abs/1907.03739) at NeurIPS 2019.
 
 
 
@@ -52,6 +61,8 @@ To use all the codebases presented in this repository, please following the inst
 
 [[Paper]](https://arxiv.org/abs/1907.03739) [[NeurIPS 2019 spotlight talk]](https://youtu.be/h6zbQe5U1v4) [[Deploy on MIT Driverless]](https://youtu.be/WW9paispAW0) [[NVIDIA Jetson Community Project Spotlight]](https://news.developer.nvidia.com/point-voxel-cnn-3d/?ncid=so-twit-99540#cid=em02_so-twit_en-us) [[Playlist]](https://www.youtube.com/playlist?list=PL80kAHvQbh-oUjbb-kFfaSZyWqkCjrUnD) [[Website]](http://pvcnn.mit.edu/)
 
+<img src="https://hanlab.mit.edu/projects/pvcnn/figures/pvcnn_results_on_edge.png" width="1080">
+
 ### Overview
 
 In [PVCNN](https://arxiv.org/abs/1907.03739), we present a new efficient 3D deep learning module, Point-Voxel Convolution (PVConv) as is illustrated below.
@@ -95,6 +106,8 @@ python train.py configs/s3dis/pvcnn/area5.py --devices 0,1 --evaluate --configs.
 
 [[Paper]](https://arxiv.org/abs/2007.16100) [[ECCV 10-min Talk]](https://www.youtube.com/watch?v=zC_4k5Pnqss) [[MIT News]](http://news.mit.edu/2020/artificial-intelligence-ai-carbon-footprint-0423) [[State-of-the-Art on SemanticKITTI Leaderboard]](http://semantic-kitti.org/tasks.html#semseg)
 
+<img src="https://hanlab.mit.edu/projects/spvnas/figures/spvnas_barchart.png" width="1080">
+
 ### Overview
 
 We present [SPVNAS](https://arxiv.org/abs/2007.16100), the **first** AutoML method for efficient 3D scene understanding. In this work, we first adapt Point-Voxel Convolution to large-scale outdoor LiDAR scans by introducing Sparse Point-Voxel Convolution (SPVConv):
@@ -122,5 +135,6 @@ For example, if you want to run inference with the model [SemanticKITTI_val_SPVN
 ```bash
 torchpack dist-run -np 1 python evaluate.py configs/semantic_kitti/default.yaml --name SemanticKITTI_val_SPVNAS@65GMACs
 ```
+
 
 
