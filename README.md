@@ -11,8 +11,8 @@ We open source e3d: Efficient Methods for 3D Deep Learning, a repository contain
 ## Content
 
 - [Installation](#Installation)
-- [PVCNN (NeurIPS 2019, spotlight)](#PVCNN (NeurIPS 2019, spotlight))
-- [SPVNAS (ECCV 2020)](#SPVNAS (ECCV 2020))
+- [PVCNN (NeurIPS 2019, spotlight)](#PVCNN)
+- [SPVNAS (ECCV 2020)](#SPVNAS)
 
 
 
@@ -40,8 +40,7 @@ To use all the codebases presented in this repository, please following the inst
 
 
 
-## PVCNN (NeurIPS 2019, spotlight)
-
+## PVCNN
 ```bibtex
 @inproceedings{liu2019pvcnn,
   title={Point-Voxel CNN for Efficient 3D Deep Learning},
@@ -83,8 +82,7 @@ python train.py configs/s3dis/pvcnn/area5.py --devices 0,1 --evaluate --configs.
 
 
 
-## SPVNAS (ECCV 2020)
-
+## SPVNAS
 ```bibtex
 @inproceedings{
   tang2020searching,
