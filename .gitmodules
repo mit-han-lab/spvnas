@@ -1,3 +1,6 @@
 [submodule "pvcnn"]
 	path = pvcnn
 	url = https://github.com/mit-han-lab/pvcnn
+[submodule "torchsparse"]
+	path = torchsparse
+	url = https://github.com/mit-han-lab/torchsparse
