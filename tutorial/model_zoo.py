@@ -11,7 +11,6 @@ from collections import OrderedDict
 import torch
 import torch.nn as nn
 
-from torchpack import distributed as dist
 
 from models.semantic_kitti.spvnas import SPVNAS
 from models.semantic_kitti.minkunet import MinkUNet
@@ -45,14 +44,14 @@ def spvnas_specialized(net_id, pretrained=True, **kwargs):
         macro_depth_constraint=1,
         pres=net_config['pres'],
         vres=net_config['vres']
-    ).to('cuda:%d'%dist.local_rank() if torch.cuda.is_available() else 'cpu')
+    ).to('cuda:0' if torch.cuda.is_available() else 'cpu')
     model.manual_select(net_config)
     model = model.determinize()
     
     if pretrained:
         init = torch.load(
             download_url(url_base + net_id + '/init', model_dir='.torch/spvnas_specialized/%s/' % net_id),
-            map_location='cuda:%d'%dist.local_rank() if torch.cuda.is_available() else 'cpu'
+            map_location='cuda:0' if torch.cuda.is_available() else 'cpu'
         )['model']
         model.load_state_dict(init)
     return model
@@ -70,12 +69,12 @@ def spvnas_supernet(net_id, pretrained=True, **kwargs):
         macro_depth_constraint=net_config['macro_depth_constraint'],
         pres=net_config['pres'],
         vres=net_config['vres']
-    ).to('cuda:%d'%dist.local_rank() if torch.cuda.is_available() else 'cpu')
+    ).to('cuda:0' if torch.cuda.is_available() else 'cpu')
     
     if pretrained:
         init = torch.load(
             download_url(url_base + net_id + '/init', model_dir='.torch/spvnas_supernet/%s/' % net_id),
-            map_location='cuda:%d'%dist.local_rank() if torch.cuda.is_available() else 'cpu'
+            map_location='cuda:0' if torch.cuda.is_available() else 'cpu'
         )['model']
         model.load_state_dict(init)
     return model
@@ -90,12 +89,12 @@ def minkunet(net_id, pretrained=True, **kwargs):
     model = MinkUNet(
         num_classes=net_config['num_classes'],
         cr=net_config['cr']
-    ).to('cuda:%d'%dist.local_rank() if torch.cuda.is_available() else 'cpu')
+    ).to('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     if pretrained:
         init = torch.load(
             download_url(url_base + net_id + '/init', model_dir='.torch/minkunet/%s/' % net_id),
-            map_location='cuda:%d'%dist.local_rank() if torch.cuda.is_available() else 'cpu'
+            map_location='cuda:0' if torch.cuda.is_available() else 'cpu'
         )['model']
         model.load_state_dict(init)
     return model
@@ -112,12 +111,12 @@ def spvcnn(net_id, pretrained=True, **kwargs):
         cr=net_config['cr'],
         pres=net_config['pres'],
         vres=net_config['vres']
-    ).to('cuda:%d'%dist.local_rank() if torch.cuda.is_available() else 'cpu')
+    ).to('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     if pretrained:
         init = torch.load(
             download_url(url_base + net_id + '/init', model_dir='.torch/spvcnn/%s/' % net_id),
-            map_location='cuda:%d'%dist.local_rank() if torch.cuda.is_available() else 'cpu'
+            map_location='cuda:0' if torch.cuda.is_available() else 'cpu'
         )['model']
         model.load_state_dict(init)
     return model
