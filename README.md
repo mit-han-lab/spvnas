@@ -7,7 +7,11 @@ We open source e3d: Efficient Methods for 3D Deep Learning, a repository contain
 
 ## News
 
-**[2020-08]** Please check out our ECCV 2020 tutorial on [AutoML for Efficient 3D Deep Learning](https://www.youtube.com/watch?v=zzJR07LMXxs), which summarizes the methods released in this codebase.
+**[2020-08]** Please check out our ECCV 2020 tutorial on [AutoML for Efficient 3D Deep Learning](https://www.youtube.com/watch?v=zzJR07LMXxs), which summarizes the methods released in this codebase. We also made the hands-on tutorial available in colab:
+<p class="aligncenter">
+    <a href="https://colab.research.google.com/github/mit-han-lab/e3d/blob/master/tutorial/e3d.ipynb" target="_parent"><img src="https://camo.githubusercontent.com/52feade06f2fecbf006889a904d221e6a730c194/68747470733a2f2f636f6c61622e72657365617263682e676f6f676c652e636f6d2f6173736574732f636f6c61622d62616467652e737667" alt="Open In Colab" data-canonical-src="https://colab.research.google.com/assets/colab-badge.svg"></a> 
+</p>
+
 
 **[2020-07]** Our [paper](https://arxiv.org/abs/2007.16100) Searching Efficient 3D Architectures with Sparse Point-Voxel Convolution is accepted to ECCV 2020.
 
