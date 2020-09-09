@@ -82,18 +82,18 @@ We further propose 3D-NAS to automatically search for efficient 3D architectures
 
 We share the pretrained models for MinkowskiNets, our manually designed SPVCNN models and also SPVNAS models found by our 3D-NAS pipeline. All the pretrained models are available in the [Model Zoo](model_zoo.py). Currently, we release the models trained on sequences 00-07 and 09-10 and evaluated on sequence 08.
 
-|                            Models                            | MACs  | mIoU |
-| :----------------------------------------------------------: | :---: | :--: |
-| [SemanticKITTI_val_MinkUNet@29GMACs](https://hanlab.mit.edu/files/SPVNAS/minkunet/SemanticKITTI_val_MinkUNet@29GMACs/) | 28.5  | 58.9 |
-| [SemanticKITTI_val_SPVCNN@30GMACs](https://hanlab.mit.edu/files/SPVNAS/spvcnn/SemanticKITTI_val_SPVCNN@30GMACs/) | 30.0  | 60.7 |
-| [SemanticKITTI_val_SPVNAS@20GMACs](https://hanlab.mit.edu/files/SPVNAS/spvnas_specialized/SemanticKITTI_val_SPVNAS@20GMACs/) | 20.0  | 61.5 |
-| [SemanticKITTI_val_SPVNAS@25GMACs](https://hanlab.mit.edu/files/SPVNAS/spvnas/SemanticKITTI_val_SPVNAS@25GMACs/) | 24.6  | 62.9 |
-| [SemanticKITTI_val_MinkUNet@46GMACs](https://hanlab.mit.edu/files/SPVNAS/minkunet/SemanticKITTI_val_MinkUNet@46GMACs/) | 45.9  | 60.3 |
-| [SemanticKITTI_val_SPVCNN@47GMACs](https://hanlab.mit.edu/files/SPVNAS/spvcnn/SemanticKITTI_val_SPVCNN@47GMACs/) | 47.4  | 61.4 |
-| [SemanticKITTI_val_SPVNAS@35GMACs](https://hanlab.mit.edu/files/SPVNAS/spvnas_specialized/SemanticKITTI_val_SPVNAS@35GMACs/) | 34.7  | 63.5 |
-| [SemanticKITTI_val_MinkUNet@114GMACs](https://hanlab.mit.edu/files/SPVNAS/minkunet/SemanticKITTI_val_MinkUNet@114GMACs/) | 113.9 | 61.1 |
-| [SemanticKITTI_val_SPVCNN@119GMACs](https://hanlab.mit.edu/files/SPVNAS/spvcnn/SemanticKITTI_val_SPVCNN@119GMACs/) | 118.6 | 63.8 |
-| [SemanticKITTI_val_SPVNAS@65GMACs](https://hanlab.mit.edu/files/SPVNAS/spvnas_specialized/SemanticKITTI_val_SPVNAS@65GMACs/) | 64.5  | 64.7 |
+|                            Models                            | \#Params (M) | MACs (G) | mIoU (paper) | mIoU (reprod.) |
+| :----------------------------------------------------------: | :----------: | :------: | :----------: | :------------: |
+| [SemanticKITTI_val_MinkUNet@29GMACs](https://hanlab.mit.edu/files/SPVNAS/minkunet/SemanticKITTI_val_MinkUNet@29GMACs/) |     5.5      |   28.5   |     58.9     |      59.3      |
+| [SemanticKITTI_val_SPVCNN@30GMACs](https://hanlab.mit.edu/files/SPVNAS/spvcnn/SemanticKITTI_val_SPVCNN@30GMACs/) |     5.5      |   30.0   |     60.7     |   60.8 ± 0.5   |
+| [SemanticKITTI_val_SPVNAS@20GMACs](https://hanlab.mit.edu/files/SPVNAS/spvnas_specialized/SemanticKITTI_val_SPVNAS@20GMACs/) |     3.3      |   20.0   |     61.5     |       -        |
+| [SemanticKITTI_val_SPVNAS@25GMACs](https://hanlab.mit.edu/files/SPVNAS/spvnas/SemanticKITTI_val_SPVNAS@25GMACs/) |     4.5      |   24.6   |     62.9     |       -        |
+| [SemanticKITTI_val_MinkUNet@46GMACs](https://hanlab.mit.edu/files/SPVNAS/minkunet/SemanticKITTI_val_MinkUNet@46GMACs/) |     8.8      |   45.9   |     60.3     |      60.0      |
+| [SemanticKITTI_val_SPVCNN@47GMACs](https://hanlab.mit.edu/files/SPVNAS/spvcnn/SemanticKITTI_val_SPVCNN@47GMACs/) |     8.8      |   47.4   |     61.4     |   61.5 ± 0.2   |
+| [SemanticKITTI_val_SPVNAS@35GMACs](https://hanlab.mit.edu/files/SPVNAS/spvnas_specialized/SemanticKITTI_val_SPVNAS@35GMACs/) |     7.0      |   34.7   |     63.5     |       -        |
+| [SemanticKITTI_val_MinkUNet@114GMACs](https://hanlab.mit.edu/files/SPVNAS/minkunet/SemanticKITTI_val_MinkUNet@114GMACs/) |     21.7     |  113.9   |     61.1     |      61.9      |
+| [SemanticKITTI_val_SPVCNN@119GMACs](https://hanlab.mit.edu/files/SPVNAS/spvcnn/SemanticKITTI_val_SPVCNN@119GMACs/) |     21.8     |  118.6   |     63.8     |   63.7 ± 0.4   |
+| [SemanticKITTI_val_SPVNAS@65GMACs](https://hanlab.mit.edu/files/SPVNAS/spvnas_specialized/SemanticKITTI_val_SPVNAS@65GMACs/) |     10.8     |   64.5   |     64.7     |       -        |
 
 ## Testing Pretrained Models
 

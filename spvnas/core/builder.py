@@ -27,15 +27,23 @@ def make_dataset() -> Dataset:
 def make_model() -> nn.Module:
     if configs.model.name == 'minkunet':
         from core.models.semantic_kitti import MinkUNet
+        if 'cr' in configs.model:
+            cr = configs.model.cr
+        else:
+            cr = 1.0
         model = MinkUNet(
             num_classes=configs.data.num_classes,
-            cr=1.0
+            cr=cr
         )
     elif configs.model.name == 'spvcnn':
         from core.models.semantic_kitti import SPVCNN
+        if 'cr' in configs.model:
+            cr = configs.model.cr
+        else:
+            cr = 1.0
         model = SPVCNN(
             num_classes=configs.data.num_classes,
-            cr=1.0,
+            cr=cr,
             pres=configs.dataset.voxel_size,
             vres=configs.dataset.voxel_size
         )

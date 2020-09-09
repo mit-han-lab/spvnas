@@ -1,4 +1,5 @@
 from typing import Any, Callable, Dict
+import numpy as np
 import torch
 from torch import nn
 from torchpack.train import Trainer
@@ -9,14 +10,20 @@ __all__ = ['SemanticKITTITrainer']
 
 class SemanticKITTITrainer(Trainer):
     def __init__(self, model: nn.Module, criterion: Callable,
-                 optimizer: Optimizer, scheduler: Scheduler) -> None:
+                 optimizer: Optimizer, scheduler: Scheduler,
+                 num_workers: int, seed: int) -> None:
         self.model = model
         self.criterion = criterion
         self.optimizer = optimizer
         self.scheduler = scheduler
+        self.num_workers = num_workers
+        self.seed = seed
 
     def _before_epoch(self) -> None:
         self.model.train()
+        self.dataflow.sampler.set_epoch(self.epoch_num-1)
+        self.dataflow.worker_init_fn = lambda worker_id: np.random.seed(
+                self.seed + (self.epoch_num-1) * self.num_workers + worker_id)
 
     def _run_step(self, feed_dict: Dict[str, Any]) -> Dict[str, Any]:   
         _inputs = dict()
@@ -71,4 +78,6 @@ class SemanticKITTITrainer(Trainer):
         self.model.load_state_dict(state_dict['model'])
         self.optimizer.load_state_dict(state_dict['optimizer'])
         self.scheduler.load_state_dict(state_dict['scheduler'])
-
+        
+    def _load_previous_checkpoint(self, checkpoint_path: str) -> None:
+        pass

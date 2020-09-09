@@ -3,6 +3,10 @@ data:
   ignore_label: 255
   training_size: 19132
 
+train:
+  seed: 1588147245
+  deterministic: False
+
 dataset:
   name: semantic_kitti
   root: /dataset/semantic-kitti
