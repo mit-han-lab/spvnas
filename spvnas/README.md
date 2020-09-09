@@ -95,6 +95,10 @@ We share the pretrained models for MinkowskiNets, our manually designed SPVCNN m
 | [SemanticKITTI_val_SPVCNN@119GMACs](https://hanlab.mit.edu/files/SPVNAS/spvcnn/SemanticKITTI_val_SPVCNN@119GMACs/) |     21.8     |  118.6   |     63.8     |   63.7 ± 0.4   |
 | [SemanticKITTI_val_SPVNAS@65GMACs](https://hanlab.mit.edu/files/SPVNAS/spvnas_specialized/SemanticKITTI_val_SPVNAS@65GMACs/) |     10.8     |   64.5   |     64.7     |       -        |
 
+Here, the results are reproduced using 8 NVIDIA RTX 2080Ti GPUs. Result variation for each single model is due to the existence of floating point atomic addition operation in our [torchsparse](https://github.com/mit-han-lab/torchsparse) CUDA backend.
+
+
+
 ## Testing Pretrained Models
 
 You can run the following command to test the performance of SPVNAS / SPVCNN / MinkUNet models.
@@ -129,7 +133,17 @@ The visualizations will be generated in `sample_data/outputs`.
 
 ### SemanticKITTI
 
-The code related to training will be coming soon!
+We currently release the training code for manually-designed baseline models (SPVCNN and MinkowskiNets). You may run the following code to train the model from scratch:
+
+```bash
+torchpack dist-run -np [num_of_gpus] python train.py configs/semantic_kitti/[model name]/[config name].yaml
+```
+
+For example, to train the model [SemanticKITTI_val_SPVCNN@30GMACs](https://hanlab.mit.edu/files/SPVNAS/spvcnn/SemanticKITTI_val_SPVCNN@30GMACs/), you may run
+
+```bash
+torchpack dist-run -np [num_of_gpus] python train.py configs/semantic_kitti/spvcnn/cr0p5.yaml
+```
 
 ## Searching
 
