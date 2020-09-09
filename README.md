@@ -126,7 +126,7 @@ Please follow the instructions from [here](http://www.semantic-kitti.org) to dow
 
 ### Code
 
-The code is based on [torchsparse](https://github.com/mit-han-lab/torchsparse/), a high-performance GPU computing library for 3D sparse convolution operations. It is significantly faster than existing implementation [MinkowskiEngine](https://github.com/StanfordVL/MinkowskiEngine) and supports more diverse operations, such as the new 3D module proposed in this paper, Sparse Point-Voxel Convolution, or in short SPVConv (see [core/models/semantic_kitti/spvcnn.py](core/models/semantic_kitti/spvcnn.py) for details):
+The code (under the `spvnas` folder) is based on [torchsparse](https://github.com/mit-han-lab/torchsparse/), a high-performance GPU computing library for 3D sparse convolution operations. It is significantly faster than existing implementation [MinkowskiEngine](https://github.com/StanfordVL/MinkowskiEngine) and supports more diverse operations, such as the new 3D module proposed in this paper, Sparse Point-Voxel Convolution, or in short SPVConv (see [spvnas/core/models/semantic_kitti/spvcnn.py](spvnas/core/models/semantic_kitti/spvcnn.py) for details):
 
 ```python
 # x: sparse tensor, z: point_tensor
@@ -137,7 +137,7 @@ z_ew = voxel_to_point(x_new, z) + point_transforms(z.F)
 
 <img src="https://hanlab.mit.edu/projects/spvnas/figures/spvconv.png" width="1080">
 
-We further propose 3D-NAS to automatically search for efficient 3D architectures built with SPVConv. The 3D-NAS super network implementation can be found in [core/models/semantic_kitti/spvnas.py](core/models/semantic_kitti/spvnas.py). 
+We further propose 3D-NAS to automatically search for efficient 3D architectures built with SPVConv. The 3D-NAS super network implementation can be found in [spvnas/core/models/semantic_kitti/spvnas.py](spvnas/core/models/semantic_kitti/spvnas.py). 
 
 <img src="https://hanlab.mit.edu/projects/spvnas/figures/3dnas.png" width="1080">
 
@@ -147,7 +147,7 @@ We further propose 3D-NAS to automatically search for efficient 3D architectures
 
 #### SemanticKITTI
 
-We share the pretrained models for MinkowskiNets, our manually designed SPVCNN models and also SPVNAS models found by our 3D-NAS pipeline. All the pretrained models are available in the [Model Zoo](model_zoo.py). Currently, we release the models trained on sequences 00-07 and 09-10 and evaluated on sequence 08.
+We share the pretrained models for MinkowskiNets, our manually designed SPVCNN models and also SPVNAS models found by our 3D-NAS pipeline. All the pretrained models are available in the [Model Zoo](spvnas/model_zoo.py). Currently, we release the models trained on sequences 00-07 and 09-10 and evaluated on sequence 08.
 
 |                            Models                            | \#Params (M) | MACs (G) | mIoU (paper) | mIoU (reprod.) |
 | :----------------------------------------------------------: | :----------: | :------: | :----------: | :------------: |
@@ -168,7 +168,7 @@ Here, the results are reproduced using 8 NVIDIA RTX 2080Ti GPUs. Result variatio
 
 ### Testing Pretrained Models
 
-You can run the following command to test the performance of SPVNAS / SPVCNN / MinkUNet models.
+After `cd spvnas`, you can run the following command to test the performance of SPVNAS / SPVCNN / MinkUNet models.
 
 ```bash
 torchpack dist-run -np [num_of_gpus] python evaluate.py configs/semantic_kitti/default.yaml --name [num_of_net]
@@ -184,7 +184,7 @@ torchpack dist-run -np 1 python evaluate.py configs/semantic_kitti/default.yaml 
 
 ### Visualizations
 
-You can run the following command (on a headless server) to visualize the predictions of SPVNAS / SPVCNN / MinkUNet models:
+After `cd spvnas`, you can run the following command (on a headless server) to visualize the predictions of SPVNAS / SPVCNN / MinkUNet models:
 
 ```bash
 xvfb-run --server-args="-screen 0 1024x768x24" python visualize.py
@@ -204,7 +204,7 @@ The visualizations will be generated in `sample_data/outputs`.
 
 #### SemanticKITTI
 
-We currently release the training code for manually-designed baseline models (SPVCNN and MinkowskiNets). You may run the following code to train the model from scratch:
+We currently release the training code for manually-designed baseline models (SPVCNN and MinkowskiNets). You may run the following code after `cd spvnas` to train the model from scratch:
 
 ```bash
 torchpack dist-run -np [num_of_gpus] python train.py configs/semantic_kitti/[model name]/[config name].yaml
@@ -265,3 +265,6 @@ to do the evaluation. If you want to do inference on S3DIS with GPU 0,1, you can
 ```bash
 python train.py configs/s3dis/pvcnn/area5.py --devices 0,1 --evaluate --configs.evaluate.best_checkpoint_path s3dis.pvcnn.area5.c1.pth.tar
 ```
+
+
+
