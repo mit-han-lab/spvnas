@@ -19,7 +19,7 @@ from core import builder
 from core.trainers import SemanticKITTITrainer
 from core.callbacks import MeanIoU
 
-#from model_zoo import spvnas_specialized
+from model_zoo import spvnas_specialized
 
 def main() -> None:
     dist.init()
@@ -30,6 +30,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('config', metavar='FILE', help='config file')
     parser.add_argument('--run-dir', metavar='DIR', help='run directory')
+    parser.add_argument('--name', type=str, help='model name')
     args, opts = parser.parse_known_args()
 
     configs.load(args.config, recursive=True)
@@ -53,16 +54,23 @@ def main() -> None:
             shuffle=(split == 'train'))
         dataflow[split] = torch.utils.data.DataLoader(
             dataset[split],
-            batch_size=configs.batch_size,# if split == 'train' else 1,
+            batch_size=configs.batch_size if split == 'train' else 1,
             sampler=sampler,
             num_workers=configs.workers_per_gpu,
             pin_memory=True,
             collate_fn=dataset[split].collate_fn)
 
     
-    #model = spvnas_specialized('35G')
+    if 'spvnas' in args.name.lower():
+        model = spvnas_specialized(args.name)
+    elif 'spvcnn' in args.name.lower():
+        model = spvcnn(args.name)
+    elif 'mink' in args.name.lower():
+        model = minkunet(args.name)
+    else:
+        raise NotImplementedError
     
-    model = builder.make_model()
+    #model = builder.make_model()
     model = torch.nn.parallel.DistributedDataParallel(
         model.cuda(),
         device_ids=[dist.local_rank()],
@@ -79,6 +87,8 @@ def main() -> None:
                           criterion=criterion,
                           optimizer=optimizer,
                           scheduler=scheduler,
+                          num_workers=configs.workers_per_gpu,
+                          seed=configs.train.seed
                           )
     callbacks=Callbacks([
                           SaverRestore(),
@@ -89,7 +99,7 @@ def main() -> None:
                       ])
     callbacks._set_trainer(trainer)
     trainer.callbacks = callbacks
-    trainer.dataflow = dataflow
+    trainer.dataflow = dataflow['test']
     
     
     trainer.before_train()

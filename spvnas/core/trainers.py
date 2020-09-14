@@ -18,6 +18,7 @@ class SemanticKITTITrainer(Trainer):
         self.scheduler = scheduler
         self.num_workers = num_workers
         self.seed = seed
+        self.epoch_num = 1
 
     def _before_epoch(self) -> None:
         self.model.train()
