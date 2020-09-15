@@ -24,22 +24,29 @@ from torchsparse import SparseTensor
 from model_zoo import minkunet, spvcnn, spvnas_specialized
 
 
-def process_point_cloud(input_point_cloud, input_labels, voxel_size=0.05):
+def process_point_cloud(input_point_cloud, input_labels=None, voxel_size=0.05):
     input_point_cloud[:, 3] = input_point_cloud[:, 3]
     pc_ = np.round(input_point_cloud[:, :3] / voxel_size)
     pc_ -= pc_.min(0, keepdims=1)
     
     label_map = create_label_map()
-    labels_ = label_map[input_labels & 0xFFFF].astype(
+    if input_labels is not None:
+        labels_ = label_map[input_labels & 0xFFFF].astype(
             np.int64)  # semantic labels
+    else:
+        labels_ = np.zeros(pc_.shape[0], dtype=np.int64)
+    
     feat_ = input_point_cloud
     
-    out_pc = input_point_cloud[labels_ != labels_.max(), :3]
-    pc_ = pc_[labels_ != labels_.max()]
-    feat_ = feat_[labels_ != labels_.max()]
-    labels_ = labels_[labels_ != labels_.max()]
-    #out_pc = input_point_cloud
-    
+    if input_labels is not None:
+        out_pc = input_point_cloud[labels_ != labels_.max(), :3]
+        pc_ = pc_[labels_ != labels_.max()]
+        feat_ = feat_[labels_ != labels_.max()]
+        labels_ = labels_[labels_ != labels_.max()]
+    else:
+        out_pc = input_point_cloud
+        pc_ = pc_
+        
     inds, labels, inverse_map = sparse_quantize(pc_,
                                                 feat_,
                                                 labels_,
@@ -177,7 +184,10 @@ if __name__ == '__main__':
         gt_file_name = point_cloud_name.replace('.bin', '_GT.png')
         
         pc = np.fromfile('%s/%s'%(args.velodyne_dir, point_cloud_name), dtype=np.float32).reshape(-1,4)
-        label = np.fromfile('%s/%s'%(args.velodyne_dir, label_file_name), dtype=np.int32)
+        if os.path.exists(label_file_name):
+            label = np.fromfile('%s/%s'%(args.velodyne_dir, label_file_name), dtype=np.int32)
+        else:
+            label = None
         feed_dict = process_point_cloud(pc, label)
         inputs = feed_dict['lidar'].to(device)
         outputs = model(inputs)
@@ -185,5 +195,6 @@ if __name__ == '__main__':
         predictions = predictions[feed_dict['inverse_map']]
         fig = draw_lidar(feed_dict['pc'], predictions.astype(np.int32))
         mlab.savefig('%s/%s'%(output_dir, vis_file_name))
-        fig = draw_lidar(feed_dict['pc'], feed_dict['targets_mapped'])
-        mlab.savefig('%s/%s'%(output_dir, gt_file_name))
+        if label is not None:
+            fig = draw_lidar(feed_dict['pc'], feed_dict['targets_mapped'])
+            mlab.savefig('%s/%s'%(output_dir, gt_file_name))
