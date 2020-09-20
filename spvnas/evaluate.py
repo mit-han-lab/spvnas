@@ -19,7 +19,7 @@ from core import builder
 from core.trainers import SemanticKITTITrainer
 from core.callbacks import MeanIoU
 
-from model_zoo import spvnas_specialized
+from model_zoo import spvnas_specialized, minkunet, spvcnn
 
 def main() -> None:
     dist.init()
