@@ -325,7 +325,8 @@ class SPVNAS(RandomNet):
     def forward(self, x):
         # x: SparseTensor z: PointTensor
         z = PointTensor(x.F, x.C.float())
-        x0 = initial_voxelize(z, self.pres, self.vres)
+        #x0 = initial_voxelize(z, self.pres, self.vres)
+        x0 = point_to_voxel(x, z)
         
         x0 = self.stem(x0)
         z0 = voxel_to_point(x0, z)
