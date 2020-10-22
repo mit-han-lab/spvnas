@@ -12,10 +12,6 @@ Date: August 2020
 import argparse
 import numpy as np
 import mayavi.mlab as mlab
-try:
-    raw_input          # Python 2
-except NameError:
-    raw_input = input  # Python 3
 import os
 
 import torch
