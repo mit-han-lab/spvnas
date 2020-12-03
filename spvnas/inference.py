@@ -61,55 +61,25 @@ def process_point_cloud(input_point_cloud, input_labels=None, voxel_size=0.05):
         'inverse_map': inverse_map
     }
 
-cmap = np.array([
-    [245, 150, 100, 255],# car
-    [245, 230, 100, 255],# pedestrian with object
-    [245, 230, 100, 255], # pedestrian with object
-    [180, 30, 80, 255], # Vehicle_Truck
-    [255, 0, 0, 255], # -------
-    [30, 30, 255, 255],# Pedestrian adult
-    [245, 230, 100, 255], # pedestrian with object
-    [245, 230, 100, 255], # pedestrian with object
-    [255, 0, 255, 255], # drivable region
-    [255, 0, 255, 255],# drivable region
-    [75, 0, 75, 255], # ground
-    [255, 0, 255, 255],# drivable region
-    [0, 200, 255, 255],# static
-    [0, 200, 255, 255],# static
-    [0, 175, 0, 255],# hard vegetation
-    [0, 175, 0, 255],# hard vegetation
-    [75, 0, 75, 255],# ground
-    [0, 200, 255, 255],# static
-    [0, 200, 255, 255],# static
-    #[255, 255, 255, 0]
-])
 
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--model', type=str, default='SemanticKITTI_val_SPVCNN@119GMACs')
-    parser.add_argument('--file', type=str, default=None)
-    args = parser.parse_args()
-    
+def get_inference(model, point_cloud):
+        
     if torch.cuda.is_available():
         device = 'cuda:0'
     else:
         device = 'cpu'
-    
-    if 'MinkUNet' in args.model:
-        model = minkunet(args.model, pretrained=True)
-    elif 'SPVCNN' in args.model:
-        model = spvcnn(args.model, pretrained=True)
-    elif 'SPVNAS' in args.model:
-        model = spvnas_specialized(args.model, pretrained=True)
+
+    if 'MinkUNet' in model:
+        model = minkunet(model, pretrained=True)
+    elif 'SPVCNN' in model:
+        model = spvcnn(model, pretrained=True)
+    elif 'SPVNAS' in model:
+        model = spvnas_specialized(model, pretrained=True)
     else:
         raise NotImplementedError
-    
+
     model = model.to(device)
-    
-    point_cloud_name = args.file
-    pc = np.fromfile(point_cloud_name, dtype=np.float32).reshape(-1, 4)
-    feed_dict = process_point_cloud(pc)
+    feed_dict = process_point_cloud(point_cloud)
     inputs = feed_dict['lidar'].to(device)
 
     print("Prediction started")
@@ -118,3 +88,15 @@ if __name__ == '__main__':
     predictions = predictions[feed_dict['inverse_map']]
     predictions.astype(np.int32).tofile(f"{point_cloud_name}_color.bin")
     print("Predictions saved")
+
+    return predictions.astype(np.int32)
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model', type=str, default='SemanticKITTI_val_SPVCNN@119GMACs')
+    parser.add_argument('--file', type=str, default=None)
+    args = parser.parse_args()
+    
+    point_cloud_name = args.file
+    pc = np.fromfile(point_cloud_name, dtype=np.float32).reshape(-1, 4)
+    get_inference(args.model, pc)
