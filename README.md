@@ -38,7 +38,7 @@ We open source e3d: Efficient Methods for 3D Deep Learning, a repository contain
 Please run:
 
 ```bash
-git clone https://github.com/mit-han-lab/e3d --recurse-submodules
+git clone https://github.com/sandeepnmenon/e3d.git --recurse-submodules
 ```
 
 to clone this code base. If you forget to add the `—recursive-submodules` flag when cloning the codebase, please run:
@@ -50,7 +50,7 @@ git submodule update --init
 after you run:
 
 ```bash
-git clone https://github.com/mit-han-lab/e3d
+git clone https://github.com/sandeepnmenon/e3d.git
 ```
 
 To use all the codebases presented in this repository, please following the instructions in each folder. 
