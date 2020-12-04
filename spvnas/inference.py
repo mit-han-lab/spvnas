@@ -66,15 +66,14 @@ def get_inference(model, point_cloud):
         raise NotImplementedError
 
     model = model.to(device)
+    model.eval()
     with torch.no_grad():
         feed_dict = process_point_cloud(point_cloud)
         inputs = feed_dict['lidar'].to(device)
 
-        print("Prediction started")
         outputs = model(inputs)
         predictions = outputs.argmax(1).cpu().numpy()
         predictions = predictions[feed_dict['inverse_map']]
-        print("Predictions obtained")
 
     return predictions.astype(np.uint8)
 
