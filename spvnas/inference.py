@@ -66,7 +66,6 @@ def get_inference(model, point_cloud):
         raise NotImplementedError
 
     model = model.to(device)
-    model.eval()
     with torch.no_grad():
         feed_dict = process_point_cloud(point_cloud)
         inputs = feed_dict['lidar'].to(device)
