@@ -121,6 +121,7 @@ cmap = np.array([
     [0, 0, 255, 255],
     #[255, 255, 255, 0]
 ])
+cmap = cmap[:, [2, 1, 0, 3]]  # convert bgra to rgba
 
 
 #cmap[:, -1] = 255
