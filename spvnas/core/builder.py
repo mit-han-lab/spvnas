@@ -48,7 +48,7 @@ def make_model() -> nn.Module:
             vres=configs.dataset.voxel_size
         )
     else:
-        raise NotImplementedError(configs.model.estimator.name)
+        raise NotImplementedError(configs.model.name)
     return model
 
 
