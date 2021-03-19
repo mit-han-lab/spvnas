@@ -93,7 +93,7 @@ The visualizations will be generated in `sample_data/outputs`.
 
 #### SemanticKITTI
 
-We currently release the training code for manually-designed baseline models (SPVCNN and MinkowskiNets). You may run the following code after `cd spvnas` to train the model from scratch:
+We currently release the training code for manually-designed baseline models (SPVCNN and MinkowskiNets). You may run the following code to train the model from scratch:
 
 ```bash
 torchpack dist-run -np [num_of_gpus] python train.py configs/semantic_kitti/[model name]/[config name].yaml
