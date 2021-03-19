@@ -1,34 +1,25 @@
 # SPVNAS
 
+### [video](https://youtu.be/zzJR07LMXxs) | [paper](https://arxiv.org/abs/2007.16100) | [website](http://spvnas.mit.edu/) [![](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/mit-han-lab/e3d/blob/master/tutorial/e3d.ipynb" target="_parent"><img src="https://camo.githubusercontent.com/52feade06f2fecbf006889a904d221e6a730c194/68747470733a2f2f636f6c61622e72657365617263682e676f6f676c652e636f6d2f6173736574732f636f6c61622d62616467652e737667)
+
+[Searching Efficient 3D Architectures with Sparse Point-Voxel Convolution](https://arxiv.org/abs/2007.16100)
+
+[Haotian Tang*](http://kentang.net/), [Zhijian Liu*](http://zhijianliu.com/), Shengyu Zhao, Yujun Lin, [Ji Lin](http://linji.me/), [Hanrui Wang](http://hanruiwang.me/), [Song Han](https://songhan.mit.edu/)
+
+ECCV 2020
+
 <img src="https://hanlab.mit.edu/projects/spvnas/figures/spvnas_vs_mink.gif" width="1080">
+
+SPVNAS achieves state-of-the-art performance on the SemanticKITTI [leaderboard](http://semantic-kitti.org/tasks.html#semseg) (as of July 2020) and outperforms [MinkowskiNet](https://arxiv.org/abs/1904.08755) with **3x speedup, 8x MACs reduction**.
 
 
 ## News
 
-**[2020-09]** **[NEW!!]** We release baseline training code for SPVCNNs and MinkowskiNets in [spvnas](https://github.com/mit-han-lab/e3d/tree/master/spvnas) repo, please have a look!
+**[2020-09]** We release baseline training code for SPVCNNs and MinkowskiNets.
 
-**[2020-08]** Please check out our ECCV 2020 tutorial on [AutoML for Efficient 3D Deep Learning](https://www.youtube.com/watch?v=zzJR07LMXxs), which summarizes the methods released in this codebase. We also made the hands-on tutorial available in colab:
+**[2020-08]** Please check out our ECCV 2020 tutorial on [AutoML for Efficient 3D Deep Learning](https://www.youtube.com/watch?v=zzJR07LMXxs), which summarizes the methods released in this codebase. We also made the hands-on tutorial available in colab.
 
-<p class="aligncenter">
-
-    <a href="https://colab.research.google.com/github/mit-han-lab/e3d/blob/master/tutorial/e3d.ipynb" target="_parent"><img src="https://camo.githubusercontent.com/52feade06f2fecbf006889a904d221e6a730c194/68747470733a2f2f636f6c61622e72657365617263682e676f6f676c652e636f6d2f6173736574732f636f6c61622d62616467652e737667" alt="Open In Colab" data-canonical-src="https://colab.research.google.com/assets/colab-badge.svg"></a> 
-</p>
-
-**[2020-07]** Our [paper](https://arxiv.org/abs/2007.16100) Searching Efficient 3D Architectures with Sparse Point-Voxel Convolution is accepted to ECCV 2020.
-
-
-
-[[Tutorial at ECCV NAS Workshop]](https://www.youtube.com/watch?v=zzJR07LMXxs) [[ECCV 10-min Talk]](https://www.youtube.com/watch?v=zC_4k5Pnqss) [[MIT News]](http://news.mit.edu/2020/artificial-intelligence-ai-carbon-footprint-0423) [[State-of-the-Art on SemanticKITTI Leaderboard]](http://semantic-kitti.org/tasks.html#semseg)
-
-
-
-
-
-## Overview
-
-We release the PyTorch code of our paper SPVNAS: Searching Efficient 3D Architectures with Sparse Point Voxel Convolution ([arXiv version](https://arxiv.org/abs/2007.16100)). It achieves state-of-the-art performance on the SemanticKITTI [leaderboard](http://semantic-kitti.org/tasks.html#semseg), and outperforms [MinkowskiNet](https://arxiv.org/abs/1904.08755) with **3x speedup, 8x MACs reduction**.
-
-
+**[2020-07]** Our paper is accepted to ECCV 2020.
 
 ## Usage
 
@@ -37,20 +28,15 @@ We release the PyTorch code of our paper SPVNAS: Searching Efficient 3D Architec
 The code is built with following libraries:
 - Python >= 3.6
 - [PyTorch](https://github.com/pytorch/pytorch) >= 1.6
-- [tensorboardX](https://github.com/lanpa/tensorboardX) >= 1.2
 - [tqdm](https://github.com/tqdm/tqdm)
 - [torchpack](https://github.com/mit-han-lab/torchpack)
 - [torchsparse](https://github.com/mit-han-lab/torchsparse)
-
-
 
 ### Data Preparation
 
 #### SemanticKITTI
 
 Please follow the instructions from [here](http://www.semantic-kitti.org) to download the SemanticKITTI dataset (both KITTI Odometry dataset and SemanticKITTI labels) and extract all the files in the `sequences` folder to `/dataset/semantic-kitti`. You shall see 22 folders 00, 01, …, 21; each with subfolders named `velodyne` and `labels`.
-
-
 
 ### Model Zoo
 
@@ -73,11 +59,9 @@ We share the pretrained models for MinkowskiNets, our manually designed SPVCNN m
 
 Here, the results are reproduced using 8 NVIDIA RTX 2080Ti GPUs. Result variation for each single model is due to the existence of floating point atomic addition operation in our [torchsparse](https://github.com/mit-han-lab/torchsparse) CUDA backend.
 
-
-
 ### Testing Pretrained Models
 
-After `cd spvnas`, you can run the following command to test the performance of SPVNAS / SPVCNN / MinkUNet models.
+You can run the following command to test the performance of SPVNAS / SPVCNN / MinkUNet models.
 
 ```bash
 torchpack dist-run -np [num_of_gpus] python evaluate.py configs/semantic_kitti/default.yaml --name [num_of_net]
@@ -89,11 +73,9 @@ For example, to test the model [SemanticKITTI_val_SPVNAS@65GMACs](https://hanlab
 torchpack dist-run -np 1 python evaluate.py configs/semantic_kitti/default.yaml --name SemanticKITTI_val_SPVNAS@65GMACs
 ```
 
-
-
 ### Visualizations
 
-After `cd spvnas`, you can run the following command (on a headless server) to visualize the predictions of SPVNAS / SPVCNN / MinkUNet models:
+You can run the following command (on a headless server) to visualize the predictions of SPVNAS / SPVCNN / MinkUNet models:
 
 ```bash
 xvfb-run --server-args="-screen 0 1024x768x24" python visualize.py
@@ -106,8 +88,6 @@ python visualize.py
 ```
 
 The visualizations will be generated in `sample_data/outputs`.
-
-
 
 ### Training
 
@@ -124,8 +104,6 @@ For example, to train the model [SemanticKITTI_val_SPVCNN@30GMACs](https://hanla
 ```bash
 torchpack dist-run -np [num_of_gpus] python train.py configs/semantic_kitti/spvcnn/cr0p5.yaml
 ```
-
-
 
 ### Searching
 
