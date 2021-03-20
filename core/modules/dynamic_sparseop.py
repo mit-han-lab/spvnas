@@ -94,8 +94,8 @@ class SparseDynamicConv3d(nn.Module):
             assert 0, print('Number of channels not specified!')
         cur_kernel = cur_kernel[..., torch.arange(self.runtime_outc)]
 
-    
-        return spf.conv3d(inputs, cur_kernel, self.s, self.d, self.t)
+
+        return spf.conv3d(inputs, cur_kernel, self.ks, self.s, self.d, self.t)
 
 
 class SparseDynamicBatchNorm(nn.Module):
