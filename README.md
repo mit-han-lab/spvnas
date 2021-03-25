@@ -1,6 +1,6 @@
 # SPVNAS
 
-### [video](https://youtu.be/zzJR07LMXxs) | [paper](https://arxiv.org/abs/2007.16100) | [website](http://spvnas.mit.edu/) [![](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/mit-han-lab/e3d/blob/master/tutorial/e3d.ipynb" target="_parent"><img src="https://camo.githubusercontent.com/52feade06f2fecbf006889a904d221e6a730c194/68747470733a2f2f636f6c61622e72657365617263682e676f6f676c652e636f6d2f6173736574732f636f6c61622d62616467652e737667)
+### [video](https://youtu.be/zzJR07LMXxs) | [paper](https://arxiv.org/abs/2007.16100) | [website](http://spvnas.mit.edu/) [![](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/mit-han-lab/e3d/blob/master/tutorial/e3d.ipynb)
 
 [Searching Efficient 3D Architectures with Sparse Point-Voxel Convolution](https://arxiv.org/abs/2007.16100)
 
@@ -15,9 +15,9 @@ SPVNAS achieves state-of-the-art performance on the SemanticKITTI [leaderboard](
 
 ## News
 
-**[2020-09]** We release baseline training code for SPVCNNs and MinkowskiNets.
+**[2020-09]** We release the baseline training code for SPVCNN and MinkowskiNet.
 
-**[2020-08]** Please check out our ECCV 2020 tutorial on [AutoML for Efficient 3D Deep Learning](https://www.youtube.com/watch?v=zzJR07LMXxs), which summarizes the methods released in this codebase. We also made the hands-on tutorial available in colab.
+**[2020-08]** Please check out our ECCV 2020 tutorial on [AutoML for Efficient 3D Deep Learning](https://www.youtube.com/watch?v=zzJR07LMXxs), which summarizes the algorithm in this codebase.
 
 **[2020-07]** Our paper is accepted to ECCV 2020.
 
@@ -93,7 +93,7 @@ The visualizations will be generated in `sample_data/outputs`.
 
 #### SemanticKITTI
 
-We currently release the training code for manually-designed baseline models (SPVCNN and MinkowskiNets). You may run the following code after `cd spvnas` to train the model from scratch:
+We currently release the training code for manually-designed baseline models (SPVCNN and MinkowskiNets). You may run the following code to train the model from scratch:
 
 ```bash
 torchpack dist-run -np [num_of_gpus] python train.py configs/semantic_kitti/[model name]/[config name].yaml
