@@ -1,21 +1,13 @@
-import copy
 import math
-import random
-import time
-import numpy as np
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-import torchsparse.nn as spnn
 import torchsparse.nn.functional as spf
-from torchsparse.utils import *
+from torchsparse import SparseTensor
 
-__all__ = [
-    'make_divisible', 'SparseDynamicConv3d',
-    'SparseDynamicBatchNorm'
-]
+__all__ = ['make_divisible', 'SparseDynamicConv3d', 'SparseDynamicBatchNorm']
 
 
 def make_divisible(x):
@@ -35,7 +27,7 @@ class SparseDynamicConv3d(nn.Module):
         self.inc = inc
         self.outc = outc
         self.ks = kernel_size
-        self.k = self.ks**3
+        self.k = self.ks ** 3
         self.s = stride
         self.d = dilation
         self.kernel = nn.Parameter(torch.zeros(
@@ -75,12 +67,6 @@ class SparseDynamicConv3d(nn.Module):
         self.runtime_outc = channel
 
     def forward(self, inputs):
-        # inputs: SparseTensor
-        # outputs: SparseTensor
-
-        features = inputs.F
-        coords = inputs.C
-        cur_stride = inputs.s
         cur_kernel = self.kernel
         if self.runtime_inc_constraint is not None:
             cur_kernel = cur_kernel[:, self.
@@ -91,11 +77,15 @@ class SparseDynamicConv3d(nn.Module):
                 self.runtime_inc), :] if self.ks > 1 else cur_kernel[
                     torch.arange(self.runtime_inc)]
         else:
-            assert 0, print('Number of channels not specified!')
+            raise ValueError('Number of channels not specified!')
         cur_kernel = cur_kernel[..., torch.arange(self.runtime_outc)]
 
-
-        return spf.conv3d(inputs, cur_kernel, self.ks, self.s, self.d, self.t)
+        return spf.conv3d(inputs,
+                          cur_kernel,
+                          self.ks,
+                          stride=self.s,
+                          dilation=self.d,
+                          transpose=self.t)
 
 
 class SparseDynamicBatchNorm(nn.Module):
