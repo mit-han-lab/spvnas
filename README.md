@@ -87,7 +87,7 @@ If you are running the code on a computer with monitor, you may also directly ru
 python visualize.py
 ```
 
-The visualizations will be generated in `sample_data/outputs`.
+The visualizations will be generated in `assets/`.
 
 ### Training
 
