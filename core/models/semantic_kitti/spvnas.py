@@ -9,7 +9,7 @@ import torchsparse.nn as spnn
 import torchsparse.nn.functional as spf
 from torchsparse.sparse_tensor import SparseTensor
 from torchsparse.point_tensor import PointTensor
-from torchsparse.utils.kernel_region import *
+from torchsparse.utils import *
 from torchsparse.utils.helpers import *
 
 from core.models.utils import *
