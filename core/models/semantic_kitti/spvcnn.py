@@ -1,21 +1,10 @@
-import time
-from collections import OrderedDict
-
-import torch
-import torch.nn as nn
-
 import torchsparse
 import torchsparse.nn as spnn
-import torchsparse.nn.functional as spf
-from torchsparse import SparseTensor
-from torchsparse import PointTensor
-from torchsparse.utils import *
-
 from core.models.utils import *
-
+from torch import nn
+from torchsparse import PointTensor
 
 __all__ = ['SPVCNN']
-
 
 
 class BasicConvolutionBlock(nn.Module):
@@ -23,11 +12,13 @@ class BasicConvolutionBlock(nn.Module):
         super().__init__()
         self.net = nn.Sequential(
             spnn.Conv3d(inc,
-                                 outc,
-                                 kernel_size=ks,
-                                 dilation=dilation,
-                                 stride=stride), spnn.BatchNorm(outc),
-            spnn.ReLU(True))
+                        outc,
+                        kernel_size=ks,
+                        dilation=dilation,
+                        stride=stride),
+            spnn.BatchNorm(outc),
+            spnn.ReLU(True),
+        )
 
     def forward(self, x):
         out = self.net(x)
@@ -39,10 +30,10 @@ class BasicDeconvolutionBlock(nn.Module):
         super().__init__()
         self.net = nn.Sequential(
             spnn.Conv3d(inc,
-                                 outc,
-                                 kernel_size=ks,
-                                 stride=stride,
-                                 transposed=True), spnn.BatchNorm(outc),
+                        outc,
+                        kernel_size=ks,
+                        stride=stride,
+                        transposed=True), spnn.BatchNorm(outc),
             spnn.ReLU(True))
 
     def forward(self, x):
@@ -54,16 +45,15 @@ class ResidualBlock(nn.Module):
         super().__init__()
         self.net = nn.Sequential(
             spnn.Conv3d(inc,
-                                 outc,
-                                 kernel_size=ks,
-                                 dilation=dilation,
-                                 stride=stride), spnn.BatchNorm(outc),
-            spnn.ReLU(True),
+                        outc,
+                        kernel_size=ks,
+                        dilation=dilation,
+                        stride=stride), spnn.BatchNorm(outc), spnn.ReLU(True),
             spnn.Conv3d(outc,
-                                 outc,
-                                 kernel_size=ks,
-                                 dilation=dilation,
-                                 stride=1), spnn.BatchNorm(outc))
+                        outc,
+                        kernel_size=ks,
+                        dilation=dilation,
+                        stride=1), spnn.BatchNorm(outc))
 
         self.downsample = nn.Sequential() if (inc == outc and stride == 1) else \
             nn.Sequential(
@@ -230,5 +220,3 @@ class SPVCNN(nn.Module):
 
         out = self.classifier(z3.F)
         return out
-
-

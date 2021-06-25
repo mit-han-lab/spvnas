@@ -1,22 +1,14 @@
-import time
 from collections import OrderedDict, deque
 
 import torch
 import torch.nn as nn
-
 import torchsparse
 import torchsparse.nn as spnn
-import torchsparse.nn.functional as spf
-from torchsparse import SparseTensor
-from torchsparse import PointTensor
-from torchsparse.utils import *
-
 from core.models.utils import *
-
 from core.modules.layers import *
 from core.modules.modules import *
 from core.modules.networks import *
-
+from torchsparse import PointTensor, SparseTensor
 
 __all__ = ['SPVNAS']
 
@@ -51,7 +43,7 @@ class SPVNAS(RandomNet):
 
         if 'output_channels_lb' in kwargs:
             self.output_channels_lb = kwargs['output_channels_lb']
-        
+
         base_channels = self.base_channels
         output_channels = self.output_channels
         output_channels_lb = self.output_channels_lb
@@ -59,11 +51,8 @@ class SPVNAS(RandomNet):
         self.stem = nn.Sequential(
             spnn.Conv3d(4, base_channels, kernel_size=3, stride=1),
             spnn.BatchNorm(base_channels), spnn.ReLU(True),
-            spnn.Conv3d(base_channels,
-                                 base_channels,
-                                 kernel_size=3,
-                                 stride=1), spnn.BatchNorm(base_channels),
-            spnn.ReLU(True))
+            spnn.Conv3d(base_channels, base_channels, kernel_size=3, stride=1),
+            spnn.BatchNorm(base_channels), spnn.ReLU(True))
 
         num_down_stages = self.num_down_stages
 
@@ -80,26 +69,22 @@ class SPVNAS(RandomNet):
                              ks=2,
                              stride=2,
                              dilation=1)),
-                        (
-                            'feature',
-                            RandomDepth(
-                                *[
-                                    DynamicResidualBlock(
-                                        base_channels,
-                                        output_channels[i],
-                                        cr_bounds=self.cr_bounds,
-                                        ks=3,
-                                        stride=1,
-                                        dilation=1),
-                                    DynamicResidualBlock(
-                                        output_channels[i],
-                                        output_channels[i],
-                                        cr_bounds=self.cr_bounds,
-                                        ks=3,
-                                        stride=1,
-                                        dilation=1)
-                                ],
-                                depth_min=macro_depth_constraint))
+                        ('feature',
+                         RandomDepth(*[
+                             DynamicResidualBlock(base_channels,
+                                                  output_channels[i],
+                                                  cr_bounds=self.cr_bounds,
+                                                  ks=3,
+                                                  stride=1,
+                                                  dilation=1),
+                             DynamicResidualBlock(output_channels[i],
+                                                  output_channels[i],
+                                                  cr_bounds=self.cr_bounds,
+                                                  ks=3,
+                                                  stride=1,
+                                                  dilation=1)
+                         ],
+                                     depth_min=macro_depth_constraint))
                     ])))
             base_channels = output_channels[i]
 
@@ -118,27 +103,24 @@ class SPVNAS(RandomNet):
                                                    cr_bounds=self.up_cr_bounds,
                                                    ks=2,
                                                    stride=2)),
-                        (
-                            'feature',
-                            RandomDepth(
-                                *[
-                                    DynamicResidualBlock(
-                                        output_channels[num_down_stages - i] +
-                                        new_base_channels,
-                                        new_base_channels,
-                                        cr_bounds=self.up_cr_bounds,
-                                        ks=3,
-                                        stride=1,
-                                        dilation=1),
-                                    DynamicResidualBlock(
-                                        new_base_channels,
-                                        new_base_channels,
-                                        cr_bounds=self.up_cr_bounds,
-                                        ks=3,
-                                        stride=1,
-                                        dilation=1)
-                                ],
-                                depth_min=macro_depth_constraint))
+                        ('feature',
+                         RandomDepth(*[
+                             DynamicResidualBlock(
+                                 output_channels[num_down_stages - i] +
+                                 new_base_channels,
+                                 new_base_channels,
+                                 cr_bounds=self.up_cr_bounds,
+                                 ks=3,
+                                 stride=1,
+                                 dilation=1),
+                             DynamicResidualBlock(new_base_channels,
+                                                  new_base_channels,
+                                                  cr_bounds=self.up_cr_bounds,
+                                                  ks=3,
+                                                  stride=1,
+                                                  dilation=1)
+                         ],
+                                     depth_min=macro_depth_constraint))
                     ])))
             base_channels = new_base_channels
 
@@ -164,7 +146,6 @@ class SPVNAS(RandomNet):
 
         self.classifier = DynamicLinear(output_channels[-1], num_classes)
         self.classifier.set_output_channel(num_classes)
-
 
         self.dropout = nn.Dropout(0.3, True)
         self.weight_initialization()
@@ -251,7 +232,6 @@ class SPVNAS(RandomNet):
 
         return sample
 
-    
     def manual_select(self, sample):
         for name, module in self.named_random_modules():
             if sample[name] is not None:
@@ -304,8 +284,7 @@ class SPVNAS(RandomNet):
             x = SparseTensor(sample_feat,
                              sample_coord.int()).to('cuda:%d' % local_rank)
         else:
-            x = SparseTensor(sample_feat,
-                             sample_coord.int())
+            x = SparseTensor(sample_feat, sample_coord.int())
         with torch.no_grad():
             x = self.forward(x)
 
@@ -326,7 +305,7 @@ class SPVNAS(RandomNet):
         z = PointTensor(x.F, x.C.float())
         #x0 = initial_voxelize(z, self.pres, self.vres)
         x0 = point_to_voxel(x, z)
-        
+
         x0 = self.stem(x0)
         z0 = voxel_to_point(x0, z)
         z0.F = z0.F  #+ self.point_transforms[0](z.F)
@@ -342,7 +321,7 @@ class SPVNAS(RandomNet):
         z1.F = z1.F + self.point_transforms[0](z0.F)
 
         y1 = point_to_voxel(x4, z1)
-        y1.feats = self.dropout(y1.feats)
+        y1.F = self.dropout(y1.feats)
         y1 = self.upsample[0].transition(y1)
         y1 = torchsparse.cat([y1, x3])
         y1 = self.upsample[0].feature(y1)
@@ -356,7 +335,7 @@ class SPVNAS(RandomNet):
         z2.F = z2.F + self.point_transforms[1](z1.F)
 
         y3 = point_to_voxel(y2, z2)
-        y3.feats = self.dropout(y3.feats)
+        y3.F = self.dropout(y3.F)
         y3 = self.upsample[2].transition(y3)
         y3 = torchsparse.cat([y3, x1])
         y3 = self.upsample[2].feature(y3)
