@@ -191,7 +191,7 @@ class ConvolutionBlock(nn.Module):
                                       kernel_size=ks,
                                       dilation=dilation,
                                       stride=stride,
-                                      transpose=transpose)),
+                                      transposed=transpose)),
                 ('bn', spnn.BatchNorm(outc)),
                 ('act',
                  spnn.ReLU(True) if not self.no_relu else nn.Sequential())

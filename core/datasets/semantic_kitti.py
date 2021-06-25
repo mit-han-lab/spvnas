@@ -15,7 +15,8 @@ from numba import jit
 
 import cv2
 from torchsparse import SparseTensor
-from torchsparse.utils import sparse_collate_fn, sparse_quantize
+from torchsparse.utils.collate import sparse_collate_fn
+from torchsparse.utils.quantize import sparse_quantize
 
 __all__ = ['SemanticKITTI']
 
@@ -211,7 +212,7 @@ class SemanticKITTIInternal:
             block[:, :3] = np.dot(block[:, :3], transform_mat)
 
         block[:, 3] = block_[:, 3]
-        pc_ = np.round(block[:, :3] / self.voxel_size)
+        pc_ = np.round(block[:, :3] / self.voxel_size).astype(np.int32)
         pc_ -= pc_.min(0, keepdims=1)
         #inds = self.inds[index]
 
@@ -229,11 +230,9 @@ class SemanticKITTIInternal:
 
         feat_ = block
 
-        inds, labels, inverse_map = sparse_quantize(pc_,
-                                                    feat_,
-                                                    labels_,
+        _, inds, inverse_map = sparse_quantize(pc_,
                                                     return_index=True,
-                                                    return_invs=True)
+                                                    return_inverse=True)
 
         if 'train' in self.split:
             if len(inds) > self.num_points:

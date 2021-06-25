@@ -1,10 +1,11 @@
+import torch
 import torchsparse
 import torchsparse.nn as spnn
 import torchsparse.nn.functional as spf
-from torchsparse.sparse_tensor import SparseTensor
-from torchsparse.point_tensor import PointTensor
-from torchsparse.utils.kernel_region import *
-from torchsparse.utils.helpers import *
+from torchsparse import SparseTensor
+from torchsparse import PointTensor
+from torchsparse.utils import *
+from torchsparse.nn.utils import get_kernel_offsets
 
 
 __all__ = ['initial_voxelize', 'point_to_voxel', 'voxel_to_point']
@@ -27,7 +28,7 @@ def initial_voxelize(z, init_res, after_res):
     inserted_feat = spf.spvoxelize(z.F, idx_query, counts)
 
     new_tensor = SparseTensor(inserted_feat, inserted_coords, 1)
-    new_tensor.check()
+    new_tensor.cmaps.setdefault(new_tensor.stride, new_tensor.coords)
     z.additional_features['idx_query'][1] = idx_query
     z.additional_features['counts'][1] = counts
     z.C = new_float_coord
@@ -43,7 +44,7 @@ def point_to_voxel(x, z):
         #pc_hash = hash_gpu(torch.floor(z.C).int())
         pc_hash = spf.sphash(
             torch.cat([
-                torch.floor(z.C[:, :3] / x.s).int() * x.s,
+                torch.floor(z.C[:, :3] / x.s[0]).int() * x.s[0],
                 z.C[:, -1].int().view(-1, 1)
             ], 1))
         sparse_hash = spf.sphash(x.C)
@@ -57,8 +58,8 @@ def point_to_voxel(x, z):
 
     inserted_feat = spf.spvoxelize(z.F, idx_query, counts)
     new_tensor = SparseTensor(inserted_feat, x.C, x.s)
-    new_tensor.coord_maps = x.coord_maps
-    new_tensor.kernel_maps = x.kernel_maps
+    new_tensor.cmaps = x.cmaps
+    new_tensor.kmaps = x.kmaps
 
     return new_tensor
 
@@ -68,18 +69,17 @@ def point_to_voxel(x, z):
 def voxel_to_point(x, z, nearest=False):
     if z.idx_query is None or z.weights is None or z.idx_query.get(
             x.s) is None or z.weights.get(x.s) is None:
-        kr = KernelRegion(2, x.s, 1)
-        off = kr.get_kernel_offset().to(z.F.device)
+        off = get_kernel_offsets(2, x.s, 1, device=z.F.device)
         #old_hash = kernel_hash_gpu(torch.floor(z.C).int(), off)
         old_hash = spf.sphash(
             torch.cat([
-                torch.floor(z.C[:, :3] / x.s).int() * x.s,
+                torch.floor(z.C[:, :3] / x.s[0]).int() * x.s[0],
                 z.C[:, -1].int().view(-1, 1)
             ], 1), off)
         pc_hash = spf.sphash(x.C.to(z.F.device))
         idx_query = spf.sphashquery(old_hash, pc_hash)
         weights = spf.calc_ti_weights(z.C, idx_query,
-                                  scale=x.s).transpose(0, 1).contiguous()
+                                  scale=x.s[0]).transpose(0, 1).contiguous()
         idx_query = idx_query.transpose(0, 1).contiguous()
         if nearest:
             weights[:, 1:] = 0.

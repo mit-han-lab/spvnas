@@ -85,7 +85,7 @@ class SparseDynamicConv3d(nn.Module):
                           self.ks,
                           stride=self.s,
                           dilation=self.d,
-                          transpose=self.t)
+                          transposed=self.t)
 
 
 class SparseDynamicBatchNorm(nn.Module):
@@ -136,7 +136,7 @@ class SparseDynamicBatchNorm(nn.Module):
     def forward(self, inputs):
         output_features = self.bn_foward(inputs.F, self.bn, inputs.F.shape[-1])
         output_tensor = SparseTensor(output_features, inputs.C, inputs.s)
-        output_tensor.coord_maps = inputs.coord_maps
-        output_tensor.kernel_maps = inputs.kernel_maps
+        output_tensor.cmaps = inputs.cmaps
+        output_tensor.kmaps = inputs.kmaps
 
         return output_tensor
