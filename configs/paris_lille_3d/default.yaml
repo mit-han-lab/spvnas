@@ -1,0 +1,31 @@
+data:
+  num_classes: 9
+  ignore_label: 9
+  training_size: 101
+
+train:
+  seed: 1588147245
+  deterministic: False
+
+dataset:
+  name: paris_lille_3d
+  root: /dataset/paris-lille-3d
+  num_points: 1000000
+  voxel_size: 0.05
+
+num_epochs: 15
+batch_size: 2
+
+criterion:
+  name: cross_entropy
+  ignore_index: 9
+
+optimizer:
+  name: sgd
+  lr: 0.24
+  weight_decay: 1.0e-4
+  momentum: 0.9
+  nesterov: true
+
+scheduler:
+  name: cosine_warmup

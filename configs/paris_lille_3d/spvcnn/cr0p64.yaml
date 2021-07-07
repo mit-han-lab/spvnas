@@ -1,0 +1,3 @@
+model:
+  name: spvcnn
+  cr: 0.64

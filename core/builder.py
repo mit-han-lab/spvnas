@@ -19,6 +19,11 @@ def make_dataset() -> Dataset:
         dataset = SemanticKITTI(root=configs.dataset.root,
                         num_points=configs.dataset.num_points,
                         voxel_size=configs.dataset.voxel_size)
+    elif configs.dataset.name == 'paris_lille_3d':
+        from core.datasets import ParisLille3D
+        dataset = ParisLille3D(root=configs.dataset.root,
+                        num_points=configs.dataset.num_points,
+                        voxel_size=configs.dataset.voxel_size)
     else:
         raise NotImplementedError(configs.dataset.name)
     return dataset
