@@ -25,12 +25,25 @@ SPVNAS achieves state-of-the-art performance on the SemanticKITTI [leaderboard](
 ### Prerequisites
 
 The code is built with following libraries:
-
-- Python >= 3.6
+- Python >= 3.6, <3.8
 - [PyTorch](https://github.com/pytorch/pytorch) >= 1.6
 - [tqdm](https://github.com/tqdm/tqdm)
 - [torchpack](https://github.com/mit-han-lab/torchpack)
 - [torchsparse](https://github.com/mit-han-lab/torchsparse)
+- [numba](http://numba.pydata.org/)
+- [cv2](https://github.com/opencv/opencv)
+
+#### Recommended Installation
+
+For easy installation, use [conda](https://docs.conda.io/projects/conda/en/latest/):
+```
+conda create -n torch python=3.6
+conda activate torch
+conda install pytorch==1.7.0 torchvision==0.8.0 torchaudio==0.7.0 cudatoolkit=10.2 -c pytorch
+conda install numba opencv
+pip install torchpack
+pip install --upgrade git+https://github.com/mit-han-lab/torchsparse.git
+```
 
 ### Data Preparation
 
