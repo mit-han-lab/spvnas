@@ -5,6 +5,7 @@ import torch.nn.functional as F
 
 
 class DynamicLinear(nn.Module):
+
     def __init__(self, inc, outc, bias=True):
         super().__init__()
         self.inc = inc

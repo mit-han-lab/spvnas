@@ -1,4 +1,5 @@
 import torch
+
 import torchsparse.nn.functional as F
 from torchsparse import PointTensor, SparseTensor
 from torchsparse.nn.utils import get_kernel_offsets
@@ -91,8 +92,7 @@ def voxel_to_point(x, z, nearest=False):
         z.weights[x.s] = weights
 
     else:
-        new_feat = F.spdevoxelize(x.F, z.idx_query.get(x.s),
-                                  z.weights.get(x.s))
+        new_feat = F.spdevoxelize(x.F, z.idx_query.get(x.s), z.weights.get(x.s))
         new_tensor = PointTensor(new_feat,
                                  z.C,
                                  idx_query=z.idx_query,

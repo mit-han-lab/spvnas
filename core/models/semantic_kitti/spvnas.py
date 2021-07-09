@@ -2,6 +2,7 @@ from collections import OrderedDict, deque
 
 import torch
 import torch.nn as nn
+
 import torchsparse
 import torchsparse.nn as spnn
 from core.models.utils import *
@@ -26,9 +27,8 @@ class SPVNAS(RandomNet):
         super().__init__()
         self.pres = kwargs.get('pres', 0.05)
         self.vres = kwargs.get('vres', 0.05)
-        self.cr_bounds = [
-            0.125, 1.0
-        ] if 'cr_bounds' not in kwargs else kwargs['cr_bounds']
+        self.cr_bounds = [0.125, 1.0
+                         ] if 'cr_bounds' not in kwargs else kwargs['cr_bounds']
         self.up_cr_bounds = [
             0.125, 1.0
         ] if 'up_cr_bounds' not in kwargs else kwargs['up_cr_bounds']
@@ -62,13 +62,12 @@ class SPVNAS(RandomNet):
                 nn.Sequential(
                     OrderedDict([
                         ('transition',
-                         DynamicConvolutionBlock(
-                             base_channels,
-                             base_channels,
-                             cr_bounds=self.trans_cr_bounds,
-                             ks=2,
-                             stride=2,
-                             dilation=1)),
+                         DynamicConvolutionBlock(base_channels,
+                                                 base_channels,
+                                                 cr_bounds=self.trans_cr_bounds,
+                                                 ks=2,
+                                                 stride=2,
+                                                 dilation=1)),
                         ('feature',
                          RandomDepth(*[
                              DynamicResidualBlock(base_channels,
@@ -106,8 +105,8 @@ class SPVNAS(RandomNet):
                         ('feature',
                          RandomDepth(*[
                              DynamicResidualBlock(
-                                 output_channels[num_down_stages - i] +
-                                 new_base_channels,
+                                 output_channels[num_down_stages - i]
+                                 + new_base_channels,
                                  new_base_channels,
                                  cr_bounds=self.up_cr_bounds,
                                  ks=3,
@@ -211,9 +210,8 @@ class SPVNAS(RandomNet):
                     cons = list(range(trans_output_channels)) + list(
                         range(
                             self.output_channels[len(self.downsample) + i + 1],
-                            self.output_channels[len(self.downsample) + i + 1]
-                            + cur_outputs_channels[len(self.downsample) - 1 -
-                                                   i]))
+                            self.output_channels[len(self.downsample) + i + 1] +
+                            cur_outputs_channels[len(self.downsample) - 1 - i]))
                     self.upsample[i].feature.layers[j].net.layers[
                         0].constrain_in_channel(cons)
                     self.upsample[i].feature.layers[
@@ -261,9 +259,8 @@ class SPVNAS(RandomNet):
                     cons = list(range(trans_output_channels)) + list(
                         range(
                             self.output_channels[len(self.downsample) + i + 1],
-                            self.output_channels[len(self.downsample) + i + 1]
-                            + cur_outputs_channels[len(self.downsample) - 1 -
-                                                   i]))
+                            self.output_channels[len(self.downsample) + i + 1] +
+                            cur_outputs_channels[len(self.downsample) - 1 - i]))
                     self.upsample[i].feature.layers[j].net.layers[
                         0].constrain_in_channel(cons)
                     self.upsample[i].feature.layers[

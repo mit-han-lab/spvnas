@@ -1,15 +1,9 @@
+from itertools import filterfalse as ifilterfalse
 from typing import Any, Callable
 
 import torch
-from torch import nn
 import torch.nn.functional as F
-
-
-try:
-    from itertools import ifilterfalse
-except ImportError:
-    from itertools import filterfalse as ifilterfalse
-
+from torch import nn
 
 __all__ = ['Lovasz_softmax', 'MixLovaszCrossEntropy']
 
@@ -54,7 +48,11 @@ def lovasz_grad(gt_sorted):
     return jaccard
 
 
-def lovasz_softmax(probas, labels, classes='present', per_image=False, ignore=None):
+def lovasz_softmax(probas,
+                   labels,
+                   classes='present',
+                   per_image=False,
+                   ignore=None):
     """
     Multi-class Lovasz-Softmax loss
       probas: [B, C, H, W] Variable, class probabilities at each prediction (between 0 and 1).
@@ -65,10 +63,13 @@ def lovasz_softmax(probas, labels, classes='present', per_image=False, ignore=No
       ignore: void class labels
     """
     if per_image:
-        loss = mean(lovasz_softmax_flat(*flatten_probas(prob.unsqueeze(0), lab.unsqueeze(0), ignore), classes=classes)
-                    for prob, lab in zip(probas, labels))
+        loss = mean(
+            lovasz_softmax_flat(
+                *flatten_probas(prob.unsqueeze(0), lab.unsqueeze(0), ignore),
+                classes=classes) for prob, lab in zip(probas, labels))
     else:
-        loss = lovasz_softmax_flat(*flatten_probas(probas, labels, ignore), classes=classes)
+        loss = lovasz_softmax_flat(*flatten_probas(probas, labels, ignore),
+                                   classes=classes)
     return loss
 
 
@@ -87,7 +88,7 @@ def lovasz_softmax_flat(probas, labels, classes='present'):
     class_to_sum = list(range(C)) if classes in ['all', 'present'] else classes
     for c in class_to_sum:
         fg = (labels == c).float()  # foreground for class c
-        if (classes is 'present' and fg.sum() == 0):
+        if (classes == 'present' and fg.sum() == 0):
             continue
         if C == 1:
             if len(classes) > 1:
@@ -112,7 +113,8 @@ def flatten_probas(probas, labels, ignore=None):
         B, H, W = probas.size()
         probas = probas.view(B, 1, H, W)
     B, C, H, W = probas.size()
-    probas = probas.permute(0, 2, 3, 1).contiguous().view(-1, C)  # B * H * W, C = P, C
+    probas = probas.permute(0, 2, 3,
+                            1).contiguous().view(-1, C)  # B * H * W, C = P, C
     labels = labels.view(-1)
     if ignore is None:
         return probas, labels
@@ -123,8 +125,9 @@ def flatten_probas(probas, labels, ignore=None):
 
 
 class Lovasz_softmax(nn.Module):
+
     def __init__(self, classes='present'):
-        super(Lovasz_softmax, self).__init__()
+        super().__init__()
         self.classes = classes
 
     def forward(self, probas, labels):
@@ -132,15 +135,15 @@ class Lovasz_softmax(nn.Module):
 
 
 class MixLovaszCrossEntropy(nn.Module):
+
     def __init__(self, classes='present', ignore_index=255):
-        super(MixLovaszCrossEntropy, self).__init__()
+        super().__init__()
         self.classes = classes
         self.ignore_index = ignore_index
         self.lovasz = Lovasz_softmax(classes)
         self.ce = nn.CrossEntropyLoss(ignore_index=ignore_index)
-    
+
     def forward(self, x, y):
         lovasz = self.lovasz(F.softmax(x, 1), y)
         ce = self.ce(x, y)
         return lovasz + ce
-

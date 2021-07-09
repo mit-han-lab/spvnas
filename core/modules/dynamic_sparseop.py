@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 import torchsparse.nn.functional as spf
 from torchsparse import SparseTensor
 
@@ -16,6 +17,7 @@ def make_divisible(x):
 
 # TBD: kernel_size = 1 special case.
 class SparseDynamicConv3d(nn.Module):
+
     def __init__(self,
                  inc,
                  outc,
@@ -33,21 +35,21 @@ class SparseDynamicConv3d(nn.Module):
         self.kernel = nn.Parameter(torch.zeros(
             self.k, inc, outc)) if self.k > 1 else nn.Parameter(
                 torch.zeros(inc, outc))
-        self.t = transpose
+        self.t = transposed
         self.init_weight()
         self.runtime_outc = None
         self.runtime_inc = None
         self.runtime_inc_constraint = None
 
         if kernel_size == 1:
-            assert not transpose
+            assert not transposed
 
     def __repr__(self):
         if not self.t:
-            return 'SparseDynamicConv3d(imax=%s, omax=%s, s=%s, d=%s)' % (
+            return 'SparseDynamicConv3d(imax={}, omax={}, s={}, d={})'.format(
                 self.inc, self.outc, self.s, self.d)
         else:
-            return 'SparseDynamicConv3dTranspose(imax=%s, omax=%s, s=%s, d=%s)' % (
+            return 'SparseDynamicConv3dTranspose(imax={}, omax={}, s={}, d={})'.format(
                 self.inc, self.outc, self.s, self.d)
 
     def init_weight(self):
@@ -73,9 +75,10 @@ class SparseDynamicConv3d(nn.Module):
                                     runtime_inc_constraint, :] if self.ks > 1 else cur_kernel[
                                         self.runtime_inc_constraint]
         elif self.runtime_inc is not None:
-            cur_kernel = cur_kernel[:, torch.arange(
-                self.runtime_inc), :] if self.ks > 1 else cur_kernel[
-                    torch.arange(self.runtime_inc)]
+            cur_kernel = cur_kernel[:, torch.
+                                    arange(self.runtime_inc
+                                          ), :] if self.ks > 1 else cur_kernel[
+                                              torch.arange(self.runtime_inc)]
         else:
             raise ValueError('Number of channels not specified!')
         cur_kernel = cur_kernel[..., torch.arange(self.runtime_outc)]
