@@ -1,19 +1,7 @@
-import json
 import os
 import os.path
-import random
-import sys
-from collections import Sequence
 
-import cv2
-import h5py
 import numpy as np
-import scipy
-import scipy.interpolate
-import scipy.ndimage
-import torch
-from numba import jit
-
 from torchsparse import SparseTensor
 from torchsparse.utils.collate import sparse_collate_fn
 from torchsparse.utils.quantize import sparse_quantize
@@ -101,8 +89,7 @@ class SemanticKITTI(dict):
                                           voxel_size,
                                           num_points,
                                           sample_stride=sample_stride,
-                                          split='val')  #,
-                #'real_test': SemanticKITTIInternal(root, voxel_size, num_points, split='test')
+                                          split='val')
             })
 
 
@@ -133,8 +120,6 @@ class SemanticKITTIInternal:
             ]
             if self.google_mode or trainval:
                 self.seqs.append('08')
-            #if trainval is True:
-            #    self.seqs.append('08')
         elif self.split == 'val':
             self.seqs = ['08']
         elif self.split == 'test':
@@ -151,7 +136,6 @@ class SemanticKITTIInternal:
             ]
             self.files.extend(seq_files)
 
-        #self.files = self.files[:40]
         if self.sample_stride > 1:
             self.files = self.files[::self.sample_stride]
 
@@ -180,7 +164,6 @@ class SemanticKITTIInternal:
         self.reverse_label_name_mapping = reverse_label_name_mapping
         self.num_classes = cnt
         self.angle = 0.0
-        # print('There are %d classes.' % (cnt))
 
     def set_angle(self, angle):
         self.angle = angle
@@ -201,7 +184,6 @@ class SemanticKITTIInternal:
                                  np.cos(theta), 0], [0, 0, 1]])
 
             block[:, :3] = np.dot(block_[:, :3], rot_mat) * scale_factor
-            #block[:, 3:] = block_[:, 3:] + np.random.randn(3) * 0.1
         else:
             theta = self.angle
             transform_mat = np.array([[np.cos(theta),
@@ -214,7 +196,6 @@ class SemanticKITTIInternal:
         block[:, 3] = block_[:, 3]
         pc_ = np.round(block[:, :3] / self.voxel_size).astype(np.int32)
         pc_ -= pc_.min(0, keepdims=1)
-        #inds = self.inds[index]
 
         label_file = self.files[index].replace('velodyne', 'labels').replace(
             '.bin', '.label')
@@ -224,9 +205,7 @@ class SemanticKITTIInternal:
         else:
             all_labels = np.zeros(pc_.shape[0]).astype(np.int32)
 
-        labels_ = self.label_map[all_labels & 0xFFFF].astype(
-            np.int64)  # semantic labels
-        inst_labels_ = (all_labels >> 16).astype(np.int64)  # instance labels
+        labels_ = self.label_map[all_labels & 0xFFFF].astype(np.int64)
 
         feat_ = block
 

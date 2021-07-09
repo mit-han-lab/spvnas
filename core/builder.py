@@ -2,7 +2,6 @@ from typing import Callable
 
 import torch
 import torch.optim
-import torchpack.distributed as dist
 from torch import nn
 from torchpack.utils.config import configs
 from torchpack.utils.typing import Dataset, Optimizer, Scheduler
@@ -50,10 +49,6 @@ def make_model() -> nn.Module:
 def make_criterion() -> Callable:
     if configs.criterion.name == 'cross_entropy':
         criterion = nn.CrossEntropyLoss(
-            ignore_index=configs.criterion.ignore_index)
-    elif configs.criterion.name == 'lovasz':
-        from core.criterions import MixLovaszCrossEntropy
-        criterion = MixLovaszCrossEntropy(
             ignore_index=configs.criterion.ignore_index)
     else:
         raise NotImplementedError(configs.criterion.name)

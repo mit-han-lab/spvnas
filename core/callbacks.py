@@ -34,18 +34,11 @@ class MeanIoU(Callback):
         outputs = outputs[targets != self.ignore_label]
         targets = targets[targets != self.ignore_label]
 
-        if type(outputs) != np.ndarray:
-            for i in range(self.num_classes):
-                self.total_seen[i] += torch.sum(targets == i).item()
-                self.total_correct[i] += torch.sum((targets == i) &
-                                                   (outputs == targets)).item()
-                self.total_positive[i] += torch.sum(outputs == i).item()
-        else:
-            for i in range(self.num_classes):
-                self.total_seen[i] += np.sum(targets == i)
-                self.total_correct[i] += np.sum((targets == i)
-                                                & (outputs == targets))
-                self.total_positive[i] += np.sum(outputs == i)
+        for i in range(self.num_classes):
+            self.total_seen[i] += torch.sum(targets == i).item()
+            self.total_correct[i] += torch.sum((targets == i)
+                                               & (outputs == targets)).item()
+            self.total_positive[i] += torch.sum(outputs == i).item()
 
     def _after_epoch(self) -> None:
         for i in range(self.num_classes):

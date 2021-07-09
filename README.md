@@ -25,7 +25,8 @@ SPVNAS achieves state-of-the-art performance on the SemanticKITTI [leaderboard](
 ### Prerequisites
 
 The code is built with following libraries:
-- Python >= 3.6, <3.8
+
+- Python >= 3.6, \<3.8
 - [PyTorch](https://github.com/pytorch/pytorch) >= 1.6
 - [tqdm](https://github.com/tqdm/tqdm)
 - [torchpack](https://github.com/mit-han-lab/torchpack)
@@ -36,6 +37,7 @@ The code is built with following libraries:
 #### Recommended Installation
 
 For easy installation, use [conda](https://docs.conda.io/projects/conda/en/latest/):
+
 ```
 conda create -n torch python=3.6
 conda activate torch

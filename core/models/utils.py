@@ -1,5 +1,4 @@
 import torch
-
 import torchsparse.nn.functional as F
 from torchsparse import PointTensor, SparseTensor
 from torchsparse.nn.utils import get_kernel_offsets
@@ -35,9 +34,9 @@ def initial_voxelize(z, init_res, after_res):
 # x: SparseTensor, z: PointTensor
 # return: SparseTensor
 def point_to_voxel(x, z):
-    if z.additional_features is None or z.additional_features.get('idx_query') is None\
-       or z.additional_features['idx_query'].get(x.s) is None:
-        #pc_hash = hash_gpu(torch.floor(z.C).int())
+    if z.additional_features is None or z.additional_features.get(
+            'idx_query') is None or z.additional_features['idx_query'].get(
+                x.s) is None:
         pc_hash = F.sphash(
             torch.cat([
                 torch.floor(z.C[:, :3] / x.s[0]).int() * x.s[0],
@@ -66,7 +65,6 @@ def voxel_to_point(x, z, nearest=False):
     if z.idx_query is None or z.weights is None or z.idx_query.get(
             x.s) is None or z.weights.get(x.s) is None:
         off = get_kernel_offsets(2, x.s, 1, device=z.F.device)
-        #old_hash = kernel_hash_gpu(torch.floor(z.C).int(), off)
         old_hash = F.sphash(
             torch.cat([
                 torch.floor(z.C[:, :3] / x.s[0]).int() * x.s[0],

@@ -7,8 +7,7 @@ import torch.cuda
 import torch.nn
 import torch.utils.data
 from torchpack import distributed as dist
-from torchpack.callbacks import (Callbacks, InferenceRunner, MaxSaver, Saver,
-                                 SaverRestore)
+from torchpack.callbacks import Callbacks, SaverRestore
 from torchpack.environ import auto_set_run_dir, set_run_dir
 from torchpack.utils.config import configs
 from torchpack.utils.logging import logger
@@ -44,7 +43,7 @@ def main() -> None:
     logger.info(f'Experiment started: "{args.run_dir}".' + '\n' + f'{configs}')
 
     dataset = builder.make_dataset()
-    dataflow = dict()
+    dataflow = {}
     for split in dataset:
         sampler = torch.utils.data.distributed.DistributedSampler(
             dataset[split],
@@ -68,7 +67,6 @@ def main() -> None:
     else:
         raise NotImplementedError
 
-    #model = builder.make_model()
     model = torch.nn.parallel.DistributedDataParallel(
         model.cuda(),
         device_ids=[dist.local_rank()],
@@ -78,7 +76,6 @@ def main() -> None:
     criterion = builder.make_criterion()
     optimizer = builder.make_optimizer(model)
     scheduler = builder.make_scheduler(optimizer)
-    meter = MeanIoU(configs.data.num_classes, configs.data.ignore_label)
 
     trainer = SemanticKITTITrainer(model=model,
                                    criterion=criterion,
@@ -97,13 +94,12 @@ def main() -> None:
     trainer.before_train()
     trainer.before_epoch()
 
-    # important
     model.eval()
 
     for feed_dict in tqdm(dataflow['test'], desc='eval'):
-        _inputs = dict()
+        _inputs = {}
         for key, value in feed_dict.items():
-            if not 'name' in key:
+            if 'name' not in key:
                 _inputs[key] = value.cuda()
 
         inputs = _inputs['lidar']

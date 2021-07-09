@@ -1,9 +1,9 @@
-from torch import nn
-
 import torchsparse
 import torchsparse.nn as spnn
-from core.models.utils import *
+from torch import nn
 from torchsparse import PointTensor
+
+from core.models.utils import initial_voxelize, point_to_voxel, voxel_to_point
 
 __all__ = ['SPVCNN']
 
@@ -62,10 +62,13 @@ class ResidualBlock(nn.Module):
             spnn.BatchNorm(outc),
         )
 
-        self.downsample = nn.Sequential() if (inc == outc and stride == 1) else \
-            nn.Sequential(
-                spnn.Conv3d(inc, outc, kernel_size=1, dilation=1, stride=stride),
-                spnn.BatchNorm(outc)
+        if inc == outc and stride == 1:
+            self.downsample = nn.Identity()
+        else:
+            self.downsample = nn.Sequential(
+                spnn.Conv3d(inc, outc, kernel_size=1, dilation=1,
+                            stride=stride),
+                spnn.BatchNorm(outc),
             )
 
         self.relu = spnn.ReLU(True)

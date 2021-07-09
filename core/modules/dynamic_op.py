@@ -50,7 +50,7 @@ class DynamicLinear(nn.Module):
 class DynamicBatchNorm(nn.Module):
     SET_RUNNING_STATISTICS = False
 
-    def __init__(self, c, cr_bounds=[0.25, 1.0], eps=1e-5, momentum=0.1):
+    def __init__(self, c, cr_bounds=(0.25, 1.0), eps=1e-5, momentum=0.1):
         super().__init__()
         self.c = c
         self.eps = eps
@@ -73,7 +73,6 @@ class DynamicBatchNorm(nn.Module):
             exponential_average_factor = 0.0
 
             if bn.training and bn.track_running_stats:
-                # TODO: if statement only here to tell the jit to skip emitting this when it is None
                 if bn.num_batches_tracked is not None:
                     bn.num_batches_tracked += 1
                     if bn.momentum is None:  # use cumulative moving average

@@ -1,14 +1,13 @@
-import copy
 import random
 from collections import OrderedDict
 
-import numpy as np
 import torch
 import torch.nn as nn
-
 import torchsparse.nn as spnn
-from core.modules.dynamic_op import *
-from core.modules.dynamic_sparseop import *
+
+from core.modules.dynamic_op import DynamicBatchNorm, DynamicLinear
+from core.modules.dynamic_sparseop import (SparseDynamicBatchNorm,
+                                           SparseDynamicConv3d, make_divisible)
 from core.modules.modules import RandomDepth, RandomModule
 
 
@@ -68,7 +67,8 @@ class LinearBlock(nn.Module):
                                                                               .
                                                                               outc]
             self.net.bn.bias.data = nas_module.net.bn.bn.bias[:self.outc]
-            self.net.bn.num_batches_tracked.data = nas_module.net.bn.bn.num_batches_tracked
+            self.net.bn.num_batches_tracked.data = \
+                nas_module.net.bn.bn.num_batches_tracked
 
     def forward(self, inputs):
         return self.net(inputs)
@@ -79,7 +79,7 @@ class DynamicLinearBlock(RandomModule):
     def __init__(self,
                  inc,
                  outc,
-                 cr_bounds=[0.25, 1.0],
+                 cr_bounds=(0.25, 1.0),
                  bias=True,
                  no_relu=False,
                  no_bn=False):
@@ -179,7 +179,7 @@ class ConvolutionBlock(nn.Module):
                  stride=1,
                  dilation=1,
                  no_relu=False,
-                 transpose=False):
+                 transposed=False):
         super().__init__()
         self.inc = inc
         self.outc = outc
@@ -193,7 +193,7 @@ class ConvolutionBlock(nn.Module):
                              kernel_size=ks,
                              dilation=dilation,
                              stride=stride,
-                             transposed=transpose)),
+                             transposed=transposed)),
                 ('bn', spnn.BatchNorm(outc)),
                 ('act',
                  spnn.ReLU(True) if not self.no_relu else nn.Sequential())
@@ -209,13 +209,15 @@ class ConvolutionBlock(nn.Module):
     def load_weights(self, nas_module, runtime_inc_constraint=None):
         cur_kernel = nas_module.net.conv.kernel
         if runtime_inc_constraint is not None:
-            cur_kernel = cur_kernel[:,
-                                    runtime_inc_constraint, :] if self.ks > 1 else cur_kernel[
-                                        runtime_inc_constraint]
+            if self.ks > 1:
+                cur_kernel = cur_kernel[:, runtime_inc_constraint, :]
+            else:
+                cur_kernel = cur_kernel[runtime_inc_constraint]
         else:
-            cur_kernel = cur_kernel[:, torch.arange(
-                self.inc), :] if self.ks > 1 else cur_kernel[torch.arange(
-                    self.inc)]
+            if self.ks > 1:
+                cur_kernel = cur_kernel[:, torch.arange(self.inc), :]
+            else:
+                cur_kernel = cur_kernel[torch.arange(self.inc)]
 
         cur_kernel = cur_kernel[..., torch.arange(self.outc)]
         self.net.conv.kernel.data = cur_kernel
@@ -225,7 +227,8 @@ class ConvolutionBlock(nn.Module):
         self.net.bn.running_mean.data = nas_module.net.bn.bn.running_mean[:self.
                                                                           outc]
         self.net.bn.bias.data = nas_module.net.bn.bn.bias[:self.outc]
-        self.net.bn.num_batches_tracked.data = nas_module.net.bn.bn.num_batches_tracked
+        self.net.bn.num_batches_tracked.data = \
+            nas_module.net.bn.bn.num_batches_tracked
 
     def forward(self, inputs):
         return self.net(inputs)
@@ -236,7 +239,7 @@ class DynamicConvolutionBlock(RandomModule):
     def __init__(self,
                  inc,
                  outc,
-                 cr_bounds=[0.25, 1.0],
+                 cr_bounds=(0.25, 1.0),
                  ks=3,
                  stride=1,
                  dilation=1,
@@ -341,7 +344,7 @@ class DynamicConvolutionBlock(RandomModule):
 
 class DynamicDeconvolutionBlock(RandomModule):
 
-    def __init__(self, inc, outc, cr_bounds=[0.25, 1.0], ks=3, stride=1):
+    def __init__(self, inc, outc, cr_bounds=(0.25, 1.0), ks=3, stride=1):
         super().__init__()
         self.inc = inc
         self.outc = outc
@@ -354,7 +357,7 @@ class DynamicDeconvolutionBlock(RandomModule):
                                               outc,
                                               kernel_size=ks,
                                               stride=stride,
-                                              transpose=True)),
+                                              transposed=True)),
                          ('bn', SparseDynamicBatchNorm(outc)),
                          ('act', spnn.ReLU(True))]))
         self.runtime_inc = None
@@ -390,7 +393,7 @@ class DynamicDeconvolutionBlock(RandomModule):
                                               self.runtime_outc,
                                               self.ks,
                                               self.s,
-                                              transpose=True)
+                                              transposed=True)
         determinized_model.load_weights(self, self.in_channel_constraint)
         return determinized_model
 
@@ -410,7 +413,7 @@ class ResidualBlock(nn.Module):
         self.downsample = downsample
         self.relu = spnn.ReLU(True)
 
-    def forward(self, inputs):
+    def forward(self, x):
         out = self.relu(self.net(x) + self.downsample(x))
         return out
 
@@ -420,7 +423,7 @@ class DynamicResidualBlock(nn.Module):
     def __init__(self,
                  inc,
                  outc,
-                 cr_bounds=[0.25, 1.0],
+                 cr_bounds=(0.25, 1.0),
                  ks=3,
                  stride=1,
                  dilation=1):
@@ -435,16 +438,26 @@ class DynamicResidualBlock(nn.Module):
         self.net_depth = None
 
         # can separate the last layer from self.net
-        self.net = RandomDepth(*[
-            DynamicConvolutionBlock(inc, outc, cr_bounds, ks, stride, dilation,
-                                    False),
-            DynamicConvolutionBlock(outc, outc, cr_bounds, ks, stride, dilation,
-                                    True)
-        ],
-                               depth_min=2)
+        self.net = RandomDepth(
+            *[
+                DynamicConvolutionBlock(inc, outc, cr_bounds, ks, stride,
+                                        dilation, False),
+                DynamicConvolutionBlock(outc, outc, cr_bounds, ks, stride,
+                                        dilation, True)
+            ],
+            depth_min=2,
+        )
 
-        self.downsample = nn.Sequential() if self.use_skip_conn else \
-                DynamicConvolutionBlock(inc, outc, cr_bounds, ks=1, stride=1, dilation=1, no_relu=True)
+        if self.use_skip_conn:
+            self.downsample = nn.Identity()
+        else:
+            self.downsample = DynamicConvolutionBlock(inc,
+                                                      outc,
+                                                      cr_bounds,
+                                                      ks=1,
+                                                      stride=1,
+                                                      dilation=1,
+                                                      no_relu=True)
 
         self.relu = spnn.ReLU(True)
         self.runtime_inc = None
@@ -459,7 +472,7 @@ class DynamicResidualBlock(nn.Module):
         self.net.layers[self.net_depth - 1].manual_select(output_channel)
 
     def clear_sample(self):
-        for name, module in self.named_modules():
+        for _, module in self.named_modules():
             if isinstance(module, RandomModule):
                 module.clear_sample()
 

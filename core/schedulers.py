@@ -16,5 +16,5 @@ def cosine_schedule_with_warmup(k, num_epochs, batch_size, dataset_size):
         return (k + 1) / warmup_iters
     else:
         iter_per_epoch = (dataset_size + batch_size - 1) // batch_size
-        return 0.5 * (1 + np.cos(np.pi * (k - warmup_iters) /
-                                 (num_epochs * iter_per_epoch)))
+        ratio = (k - warmup_iters) / (num_epochs * iter_per_epoch)
+        return 0.5 * (1 + np.cos(np.pi * ratio))

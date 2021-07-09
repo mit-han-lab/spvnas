@@ -1,11 +1,9 @@
 import json
 import os
 import sys
-from collections import OrderedDict
 from urllib.request import urlretrieve
 
 import torch
-import torch.nn as nn
 from torchpack import distributed as dist
 
 from core.models.semantic_kitti.minkunet import MinkUNet

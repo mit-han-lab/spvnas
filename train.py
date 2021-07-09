@@ -53,7 +53,7 @@ def main() -> None:
     torch.cuda.manual_seed(seed)
 
     dataset = builder.make_dataset()
-    dataflow = dict()
+    dataflow = {}
     for split in dataset:
         sampler = torch.utils.data.distributed.DistributedSampler(
             dataset[split],
@@ -88,12 +88,14 @@ def main() -> None:
         dataflow['train'],
         num_epochs=configs.num_epochs,
         callbacks=[
-            InferenceRunner(dataflow[split],
-                            callbacks=[
-                                MeanIoU(name=f'iou/{split}',
-                                        num_classes=configs.data.num_classes,
-                                        ignore_label=configs.data.ignore_label)
-                            ]) for split in ['test']
+            InferenceRunner(
+                dataflow[split],
+                callbacks=[
+                    MeanIoU(name=f'iou/{split}',
+                            num_classes=configs.data.num_classes,
+                            ignore_label=configs.data.ignore_label)
+                ],
+            ) for split in ['test']
         ] + [
             MaxSaver('iou/test'),
             Saver(),

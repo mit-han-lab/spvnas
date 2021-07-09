@@ -1,13 +1,8 @@
-''' Visualization code for point clouds and 3D bounding boxes with mayavi.
+"""Visualization code for point clouds and 3D bounding boxes with mayavi.
 
 Modified by Charles R. Qi
 Date: September 2017
-
-Ref: https://github.com/hengck23/didi-udacity-2017/blob/master/baseline-04/kitti_data/draw.py
-
-Modified by Haotian Tang
-Date: August 2020
-'''
+"""
 
 import argparse
 import os
@@ -15,10 +10,10 @@ import os
 import mayavi.mlab as mlab
 import numpy as np
 import torch
+from torchsparse import SparseTensor
+from torchsparse.utils import sparse_quantize
 
 from model_zoo import minkunet, spvcnn, spvnas_specialized
-from torchsparse import SparseTensor
-from torchsparse.utils import sparse_collate, sparse_quantize
 
 
 def process_point_cloud(input_point_cloud, input_labels=None, voxel_size=0.05):
@@ -139,12 +134,12 @@ def create_label_map(num_classes=19):
 
 
 cmap = np.array([
-    [245, 150, 100, 255],  #[0,0,0] for teaser1
+    [245, 150, 100, 255],
     [245, 230, 100, 255],
     [150, 60, 30, 255],
     [180, 30, 80, 255],
     [255, 0, 0, 255],
-    [30, 30, 255, 255],  #[255,0,0] for teaser1
+    [30, 30, 255, 255],
     [200, 40, 255, 255],
     [90, 30, 150, 255],
     [255, 0, 255, 255],
@@ -158,11 +153,8 @@ cmap = np.array([
     [80, 240, 150, 255],
     [150, 240, 255, 255],
     [0, 0, 255, 255],
-    #[255, 255, 255, 0]
 ])
 cmap = cmap[:, [2, 1, 0, 3]]  # convert bgra to rgba
-
-#cmap[:, -1] = 255
 
 
 def draw_lidar(pc,
@@ -172,14 +164,6 @@ def draw_lidar(pc,
                pts_scale=0.06,
                pts_mode='2dcircle',
                pts_color=None):
-    ''' Draw lidar points
-    Args:
-        pc: numpy array (n,3) of XYZ
-        color: numpy array (n) of intensity or whatever
-        fig: mayavi figure handler, if None create new one otherwise will use it
-    Returns:
-        fig: created or used fig
-    '''
     if fig is None:
         fig = mlab.figure(figure=None,
                           bgcolor=bgcolor,
