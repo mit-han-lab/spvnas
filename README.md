@@ -4,7 +4,7 @@
 
 [Searching Efficient 3D Architectures with Sparse Point-Voxel Convolution](https://arxiv.org/abs/2007.16100)
 
-[Haotian Tang*](http://kentang.net/), [Zhijian Liu*](http://zhijianliu.com/), Shengyu Zhao, Yujun Lin, [Ji Lin](http://linji.me/), [Hanrui Wang](http://hanruiwang.me/), [Song Han](https://songhan.mit.edu/)
+[Haotian Tang\*](http://kentang.net/), [Zhijian Liu\*](http://zhijianliu.com/), Shengyu Zhao, Yujun Lin, [Ji Lin](http://linji.me/), [Hanrui Wang](http://hanruiwang.me/), [Song Han](https://songhan.mit.edu/)
 
 ECCV 2020
 
@@ -12,21 +12,21 @@ ECCV 2020
 
 SPVNAS achieves state-of-the-art performance on the SemanticKITTI [leaderboard](http://semantic-kitti.org/tasks.html#semseg) (as of July 2020) and outperforms [MinkowskiNet](https://arxiv.org/abs/1904.08755) with **3x speedup, 8x MACs reduction**.
 
-
 ## News
 
-**[2020-09]** We release the baseline training code for SPVCNN and MinkowskiNet.
+**\[2020-09\]** We release the baseline training code for SPVCNN and MinkowskiNet.
 
-**[2020-08]** Please check out our ECCV 2020 tutorial on [AutoML for Efficient 3D Deep Learning](https://www.youtube.com/watch?v=zzJR07LMXxs), which summarizes the algorithm in this codebase.
+**\[2020-08\]** Please check out our ECCV 2020 tutorial on [AutoML for Efficient 3D Deep Learning](https://www.youtube.com/watch?v=zzJR07LMXxs), which summarizes the algorithm in this codebase.
 
-**[2020-07]** Our paper is accepted to ECCV 2020.
+**\[2020-07\]** Our paper is accepted to ECCV 2020.
 
 ## Usage
 
 ### Prerequisites
 
 The code is built with following libraries:
-- Python >= 3.6, <3.8
+
+- Python >= 3.6, \<3.8
 - [PyTorch](https://github.com/pytorch/pytorch) >= 1.6
 - [tqdm](https://github.com/tqdm/tqdm)
 - [torchpack](https://github.com/mit-han-lab/torchpack)
@@ -37,6 +37,7 @@ The code is built with following libraries:
 #### Recommended Installation
 
 For easy installation, use [conda](https://docs.conda.io/projects/conda/en/latest/):
+
 ```
 conda create -n torch python=3.6
 conda activate torch
@@ -58,7 +59,7 @@ Please follow the instructions from [here](http://www.semantic-kitti.org) to dow
 
 We share the pretrained models for MinkowskiNets, our manually designed SPVCNN models and also SPVNAS models found by our 3D-NAS pipeline. All the pretrained models are available in the [Model Zoo](spvnas/model_zoo.py). Currently, we release the models trained on sequences 00-07 and 09-10 and evaluated on sequence 08.
 
-|                            Models                            | \#Params (M) | MACs (G) | mIoU (paper) | mIoU (reprod.) |
+|                            Models                            | #Params (M) | MACs (G) | mIoU (paper) | mIoU (reprod.) |
 | :----------------------------------------------------------: | :----------: | :------: | :----------: | :------------: |
 | [SemanticKITTI_val_MinkUNet@29GMACs](https://hanlab.mit.edu/files/SPVNAS/minkunet/SemanticKITTI_val_MinkUNet@29GMACs/) |     5.5      |   28.5   |     58.9     |      59.3      |
 | [SemanticKITTI_val_SPVCNN@30GMACs](https://hanlab.mit.edu/files/SPVNAS/spvcnn/SemanticKITTI_val_SPVCNN@30GMACs/) |     5.5      |   30.0   |     60.7     |   60.8 ± 0.5   |

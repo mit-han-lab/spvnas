@@ -10,6 +10,7 @@ __all__ = ['RandomNet']
 
 
 class RandomNet(nn.Module):
+
     def random_sample(self):
         sample = {}
         for name, module in self.named_random_modules():
@@ -26,7 +27,7 @@ class RandomNet(nn.Module):
                 yield name, module
 
     def random_modules(self):
-        for name, module in self.named_random_modules():
+        for _, module in self.named_random_modules():
             yield module
 
     @abstractmethod

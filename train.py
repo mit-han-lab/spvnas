@@ -1,24 +1,22 @@
 import argparse
+import random
 import sys
 
-import random
 import numpy as np
-
 import torch
 import torch.backends.cudnn
 import torch.cuda
 import torch.nn
 import torch.utils.data
 from torchpack import distributed as dist
-from torchpack.callbacks import (InferenceRunner, MaxSaver,
-                                 Saver)
+from torchpack.callbacks import InferenceRunner, MaxSaver, Saver
 from torchpack.environ import auto_set_run_dir, set_run_dir
 from torchpack.utils.config import configs
 from torchpack.utils.logging import logger
 
 from core import builder
-from core.trainers import SemanticKITTITrainer
 from core.callbacks import MeanIoU
+from core.trainers import SemanticKITTITrainer
 
 
 def main() -> None:
@@ -42,19 +40,20 @@ def main() -> None:
 
     logger.info(' '.join([sys.executable] + sys.argv))
     logger.info(f'Experiment started: "{args.run_dir}".' + '\n' + f'{configs}')
-    
+
     # seed
     if ('seed' not in configs.train) or (configs.train.seed is None):
-        configs.train.seed = torch.initial_seed() % (2**32 - 1)
-        
-    seed = configs.train.seed + dist.rank() * configs.workers_per_gpu * configs.num_epochs
+        configs.train.seed = torch.initial_seed() % (2 ** 32 - 1)
+
+    seed = configs.train.seed + dist.rank(
+    ) * configs.workers_per_gpu * configs.num_epochs
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
 
     dataset = builder.make_dataset()
-    dataflow = dict()
+    dataflow = {}
     for split in dataset:
         sampler = torch.utils.data.distributed.DistributedSampler(
             dataset[split],
@@ -80,23 +79,23 @@ def main() -> None:
     scheduler = builder.make_scheduler(optimizer)
 
     trainer = SemanticKITTITrainer(model=model,
-                          criterion=criterion,
-                          optimizer=optimizer,
-                          scheduler=scheduler,
-                          num_workers=configs.workers_per_gpu,
-                          seed=seed)
+                                   criterion=criterion,
+                                   optimizer=optimizer,
+                                   scheduler=scheduler,
+                                   num_workers=configs.workers_per_gpu,
+                                   seed=seed)
     trainer.train_with_defaults(
         dataflow['train'],
         num_epochs=configs.num_epochs,
         callbacks=[
             InferenceRunner(
                 dataflow[split],
-                callbacks=[MeanIoU(
-                    name=f'iou/{split}',
-                    num_classes=configs.data.num_classes,
-                    ignore_label=configs.data.ignore_label
-                )])
-            for split in ['test']
+                callbacks=[
+                    MeanIoU(name=f'iou/{split}',
+                            num_classes=configs.data.num_classes,
+                            ignore_label=configs.data.ignore_label)
+                ],
+            ) for split in ['test']
         ] + [
             MaxSaver('iou/test'),
             Saver(),

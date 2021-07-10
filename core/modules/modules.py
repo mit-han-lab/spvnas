@@ -7,6 +7,7 @@ __all__ = ['RandomModule', 'RandomChoice', 'RandomDepth']
 
 
 class RandomModule(nn.Module):
+
     @abstractmethod
     def random_sample(self):
         pass
@@ -28,6 +29,7 @@ class RandomModule(nn.Module):
 
 
 class RandomChoice(RandomModule):
+
     def __init__(self, *choices):
         super().__init__()
         self.choices = nn.ModuleList(choices)
@@ -47,6 +49,7 @@ class RandomChoice(RandomModule):
 
 
 class RandomDepth(RandomModule):
+
     def __init__(self, *layers, depth_min=None, depth_max=None):
         super().__init__()
         self.layers = nn.ModuleList(layers)

@@ -1,34 +1,26 @@
-import time
-from collections import OrderedDict
-
-import torch
-import torch.nn as nn
-
 import torchsparse
 import torchsparse.nn as spnn
-import torchsparse.nn.functional as spf
-from torchsparse.sparse_tensor import SparseTensor
-from torchsparse.point_tensor import PointTensor
-from torchsparse.utils.kernel_region import *
-from torchsparse.utils.helpers import *
+from torch import nn
+from torchsparse import PointTensor
 
-from core.models.utils import *
-
+from core.models.utils import initial_voxelize, point_to_voxel, voxel_to_point
 
 __all__ = ['SPVCNN']
 
 
-
 class BasicConvolutionBlock(nn.Module):
+
     def __init__(self, inc, outc, ks=3, stride=1, dilation=1):
         super().__init__()
         self.net = nn.Sequential(
             spnn.Conv3d(inc,
-                                 outc,
-                                 kernel_size=ks,
-                                 dilation=dilation,
-                                 stride=stride), spnn.BatchNorm(outc),
-            spnn.ReLU(True))
+                        outc,
+                        kernel_size=ks,
+                        dilation=dilation,
+                        stride=stride),
+            spnn.BatchNorm(outc),
+            spnn.ReLU(True),
+        )
 
     def forward(self, x):
         out = self.net(x)
@@ -36,40 +28,47 @@ class BasicConvolutionBlock(nn.Module):
 
 
 class BasicDeconvolutionBlock(nn.Module):
+
     def __init__(self, inc, outc, ks=3, stride=1):
         super().__init__()
         self.net = nn.Sequential(
             spnn.Conv3d(inc,
-                                 outc,
-                                 kernel_size=ks,
-                                 stride=stride,
-                                 transpose=True), spnn.BatchNorm(outc),
-            spnn.ReLU(True))
+                        outc,
+                        kernel_size=ks,
+                        stride=stride,
+                        transposed=True),
+            spnn.BatchNorm(outc),
+            spnn.ReLU(True),
+        )
 
     def forward(self, x):
         return self.net(x)
 
 
 class ResidualBlock(nn.Module):
+
     def __init__(self, inc, outc, ks=3, stride=1, dilation=1):
         super().__init__()
         self.net = nn.Sequential(
             spnn.Conv3d(inc,
-                                 outc,
-                                 kernel_size=ks,
-                                 dilation=dilation,
-                                 stride=stride), spnn.BatchNorm(outc),
+                        outc,
+                        kernel_size=ks,
+                        dilation=dilation,
+                        stride=stride),
+            spnn.BatchNorm(outc),
             spnn.ReLU(True),
-            spnn.Conv3d(outc,
-                                 outc,
-                                 kernel_size=ks,
-                                 dilation=dilation,
-                                 stride=1), spnn.BatchNorm(outc))
+            spnn.Conv3d(outc, outc, kernel_size=ks, dilation=dilation,
+                        stride=1),
+            spnn.BatchNorm(outc),
+        )
 
-        self.downsample = nn.Sequential() if (inc == outc and stride == 1) else \
-            nn.Sequential(
-                spnn.Conv3d(inc, outc, kernel_size=1, dilation=1, stride=stride),
-                spnn.BatchNorm(outc)
+        if inc == outc and stride == 1:
+            self.downsample = nn.Identity()
+        else:
+            self.downsample = nn.Sequential(
+                spnn.Conv3d(inc, outc, kernel_size=1, dilation=1,
+                            stride=stride),
+                spnn.BatchNorm(outc),
             )
 
         self.relu = spnn.ReLU(True)
@@ -80,6 +79,7 @@ class ResidualBlock(nn.Module):
 
 
 class SPVCNN(nn.Module):
+
     def __init__(self, **kwargs):
         super().__init__()
 
@@ -124,8 +124,7 @@ class SPVCNN(nn.Module):
         self.up1 = nn.ModuleList([
             BasicDeconvolutionBlock(cs[4], cs[5], ks=2, stride=2),
             nn.Sequential(
-                ResidualBlock(cs[5] + cs[3], cs[5], ks=3, stride=1,
-                              dilation=1),
+                ResidualBlock(cs[5] + cs[3], cs[5], ks=3, stride=1, dilation=1),
                 ResidualBlock(cs[5], cs[5], ks=3, stride=1, dilation=1),
             )
         ])
@@ -133,8 +132,7 @@ class SPVCNN(nn.Module):
         self.up2 = nn.ModuleList([
             BasicDeconvolutionBlock(cs[5], cs[6], ks=2, stride=2),
             nn.Sequential(
-                ResidualBlock(cs[6] + cs[2], cs[6], ks=3, stride=1,
-                              dilation=1),
+                ResidualBlock(cs[6] + cs[2], cs[6], ks=3, stride=1, dilation=1),
                 ResidualBlock(cs[6], cs[6], ks=3, stride=1, dilation=1),
             )
         ])
@@ -142,8 +140,7 @@ class SPVCNN(nn.Module):
         self.up3 = nn.ModuleList([
             BasicDeconvolutionBlock(cs[6], cs[7], ks=2, stride=2),
             nn.Sequential(
-                ResidualBlock(cs[7] + cs[1], cs[7], ks=3, stride=1,
-                              dilation=1),
+                ResidualBlock(cs[7] + cs[1], cs[7], ks=3, stride=1, dilation=1),
                 ResidualBlock(cs[7], cs[7], ks=3, stride=1, dilation=1),
             )
         ])
@@ -151,14 +148,12 @@ class SPVCNN(nn.Module):
         self.up4 = nn.ModuleList([
             BasicDeconvolutionBlock(cs[7], cs[8], ks=2, stride=2),
             nn.Sequential(
-                ResidualBlock(cs[8] + cs[0], cs[8], ks=3, stride=1,
-                              dilation=1),
+                ResidualBlock(cs[8] + cs[0], cs[8], ks=3, stride=1, dilation=1),
                 ResidualBlock(cs[8], cs[8], ks=3, stride=1, dilation=1),
             )
         ])
 
-        self.classifier = nn.Sequential(nn.Linear(cs[8],
-                                                  kwargs['num_classes']))
+        self.classifier = nn.Sequential(nn.Linear(cs[8], kwargs['num_classes']))
 
         self.point_transforms = nn.ModuleList([
             nn.Sequential(
@@ -231,5 +226,3 @@ class SPVCNN(nn.Module):
 
         out = self.classifier(z3.F)
         return out
-
-

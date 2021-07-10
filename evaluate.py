@@ -1,25 +1,23 @@
 import argparse
 import sys
 
-from tqdm import tqdm
-
 import torch
 import torch.backends.cudnn
 import torch.cuda
 import torch.nn
 import torch.utils.data
 from torchpack import distributed as dist
-from torchpack.callbacks import (InferenceRunner, MaxSaver,
-                                 Saver, SaverRestore, Callbacks)
+from torchpack.callbacks import Callbacks, SaverRestore
 from torchpack.environ import auto_set_run_dir, set_run_dir
 from torchpack.utils.config import configs
 from torchpack.utils.logging import logger
+from tqdm import tqdm
 
 from core import builder
-from core.trainers import SemanticKITTITrainer
 from core.callbacks import MeanIoU
+from core.trainers import SemanticKITTITrainer
+from model_zoo import minkunet, spvcnn, spvnas_specialized
 
-from model_zoo import spvnas_specialized, minkunet, spvcnn
 
 def main() -> None:
     dist.init()
@@ -45,7 +43,7 @@ def main() -> None:
     logger.info(f'Experiment started: "{args.run_dir}".' + '\n' + f'{configs}')
 
     dataset = builder.make_dataset()
-    dataflow = dict()
+    dataflow = {}
     for split in dataset:
         sampler = torch.utils.data.distributed.DistributedSampler(
             dataset[split],
@@ -60,7 +58,6 @@ def main() -> None:
             pin_memory=True,
             collate_fn=dataset[split].collate_fn)
 
-    
     if 'spvnas' in args.name.lower():
         model = spvnas_specialized(args.name)
     elif 'spvcnn' in args.name.lower():
@@ -69,8 +66,7 @@ def main() -> None:
         model = minkunet(args.name)
     else:
         raise NotImplementedError
-    
-    #model = builder.make_model()
+
     model = torch.nn.parallel.DistributedDataParallel(
         model.cuda(),
         device_ids=[dist.local_rank()],
@@ -80,65 +76,53 @@ def main() -> None:
     criterion = builder.make_criterion()
     optimizer = builder.make_optimizer(model)
     scheduler = builder.make_scheduler(optimizer)
-    meter = MeanIoU(configs.data.num_classes, 
-                    configs.data.ignore_label)
 
     trainer = SemanticKITTITrainer(model=model,
-                          criterion=criterion,
-                          optimizer=optimizer,
-                          scheduler=scheduler,
-                          num_workers=configs.workers_per_gpu,
-                          seed=configs.train.seed
-                          )
-    callbacks=Callbacks([
-                          SaverRestore(),
-                          MeanIoU(
-                              configs.data.num_classes, 
-                              configs.data.ignore_label
-                          )
-                      ])
+                                   criterion=criterion,
+                                   optimizer=optimizer,
+                                   scheduler=scheduler,
+                                   num_workers=configs.workers_per_gpu,
+                                   seed=configs.train.seed)
+    callbacks = Callbacks([
+        SaverRestore(),
+        MeanIoU(configs.data.num_classes, configs.data.ignore_label)
+    ])
     callbacks._set_trainer(trainer)
     trainer.callbacks = callbacks
     trainer.dataflow = dataflow['test']
-    
-    
+
     trainer.before_train()
     trainer.before_epoch()
-    
-    # important
+
     model.eval()
-    
+
     for feed_dict in tqdm(dataflow['test'], desc='eval'):
-        _inputs = dict()
+        _inputs = {}
         for key, value in feed_dict.items():
-            if not 'name' in key:
+            if 'name' not in key:
                 _inputs[key] = value.cuda()
 
         inputs = _inputs['lidar']
         targets = feed_dict['targets'].F.long().cuda(non_blocking=True)
         outputs = model(inputs)
-       
+
         invs = feed_dict['inverse_map']
         all_labels = feed_dict['targets_mapped']
         _outputs = []
         _targets = []
-        for idx in range(invs.C[:, -1].max()+1):
+        for idx in range(invs.C[:, -1].max() + 1):
             cur_scene_pts = (inputs.C[:, -1] == idx).cpu().numpy()
             cur_inv = invs.F[invs.C[:, -1] == idx].cpu().numpy()
             cur_label = (all_labels.C[:, -1] == idx).cpu().numpy()
-            outputs_mapped = outputs[cur_scene_pts][
-                cur_inv].argmax(1)
+            outputs_mapped = outputs[cur_scene_pts][cur_inv].argmax(1)
             targets_mapped = all_labels.F[cur_label]
             _outputs.append(outputs_mapped)
             _targets.append(targets_mapped)
         outputs = torch.cat(_outputs, 0)
         targets = torch.cat(_targets, 0)
-        output_dict = {
-            'outputs': outputs,
-            'targets': targets
-        }
+        output_dict = {'outputs': outputs, 'targets': targets}
         trainer.after_step(output_dict)
-    
+
     trainer.after_epoch()
 
 

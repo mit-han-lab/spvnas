@@ -1,24 +1,23 @@
-import time
-from collections import OrderedDict
-
-import torch
-import torchsparse
 import torch.nn as nn
+import torchsparse
 import torchsparse.nn as spnn
 
 __all__ = ['MinkUNet']
 
 
 class BasicConvolutionBlock(nn.Module):
+
     def __init__(self, inc, outc, ks=3, stride=1, dilation=1):
         super().__init__()
         self.net = nn.Sequential(
             spnn.Conv3d(inc,
-                                 outc,
-                                 kernel_size=ks,
-                                 dilation=dilation,
-                                 stride=stride), spnn.BatchNorm(outc),
-            spnn.ReLU(True))
+                        outc,
+                        kernel_size=ks,
+                        dilation=dilation,
+                        stride=stride),
+            spnn.BatchNorm(outc),
+            spnn.ReLU(True),
+        )
 
     def forward(self, x):
         out = self.net(x)
@@ -26,40 +25,47 @@ class BasicConvolutionBlock(nn.Module):
 
 
 class BasicDeconvolutionBlock(nn.Module):
+
     def __init__(self, inc, outc, ks=3, stride=1):
         super().__init__()
         self.net = nn.Sequential(
             spnn.Conv3d(inc,
-                                 outc,
-                                 kernel_size=ks,
-                                 stride=stride,
-                                 transpose=True), spnn.BatchNorm(outc),
-            spnn.ReLU(True))
+                        outc,
+                        kernel_size=ks,
+                        stride=stride,
+                        transposed=True),
+            spnn.BatchNorm(outc),
+            spnn.ReLU(True),
+        )
 
     def forward(self, x):
         return self.net(x)
 
 
 class ResidualBlock(nn.Module):
+
     def __init__(self, inc, outc, ks=3, stride=1, dilation=1):
         super().__init__()
         self.net = nn.Sequential(
             spnn.Conv3d(inc,
-                                 outc,
-                                 kernel_size=ks,
-                                 dilation=dilation,
-                                 stride=stride), spnn.BatchNorm(outc),
+                        outc,
+                        kernel_size=ks,
+                        dilation=dilation,
+                        stride=stride),
+            spnn.BatchNorm(outc),
             spnn.ReLU(True),
-            spnn.Conv3d(outc,
-                                 outc,
-                                 kernel_size=ks,
-                                 dilation=dilation,
-                                 stride=1), spnn.BatchNorm(outc))
+            spnn.Conv3d(outc, outc, kernel_size=ks, dilation=dilation,
+                        stride=1),
+            spnn.BatchNorm(outc),
+        )
 
-        self.downsample = nn.Sequential() if (inc == outc and stride == 1) else \
-            nn.Sequential(
-                spnn.Conv3d(inc, outc, kernel_size=1, dilation=1, stride=stride),
-                spnn.BatchNorm(outc)
+        if inc == outc and stride == 1:
+            self.downsample = nn.Sequential()
+        else:
+            self.downsample = nn.Sequential(
+                spnn.Conv3d(inc, outc, kernel_size=1, dilation=1,
+                            stride=stride),
+                spnn.BatchNorm(outc),
             )
 
         self.relu = spnn.ReLU(True)
@@ -70,6 +76,7 @@ class ResidualBlock(nn.Module):
 
 
 class MinkUNet(nn.Module):
+
     def __init__(self, **kwargs):
         super().__init__()
 
@@ -77,7 +84,7 @@ class MinkUNet(nn.Module):
         cs = [32, 32, 64, 128, 256, 256, 128, 96, 96]
         cs = [int(cr * x) for x in cs]
         self.run_up = kwargs.get('run_up', True)
-        
+
         self.stem = nn.Sequential(
             spnn.Conv3d(4, cs[0], kernel_size=3, stride=1),
             spnn.BatchNorm(cs[0]), spnn.ReLU(True),
@@ -110,8 +117,7 @@ class MinkUNet(nn.Module):
         self.up1 = nn.ModuleList([
             BasicDeconvolutionBlock(cs[4], cs[5], ks=2, stride=2),
             nn.Sequential(
-                ResidualBlock(cs[5] + cs[3], cs[5], ks=3, stride=1,
-                              dilation=1),
+                ResidualBlock(cs[5] + cs[3], cs[5], ks=3, stride=1, dilation=1),
                 ResidualBlock(cs[5], cs[5], ks=3, stride=1, dilation=1),
             )
         ])
@@ -119,8 +125,7 @@ class MinkUNet(nn.Module):
         self.up2 = nn.ModuleList([
             BasicDeconvolutionBlock(cs[5], cs[6], ks=2, stride=2),
             nn.Sequential(
-                ResidualBlock(cs[6] + cs[2], cs[6], ks=3, stride=1,
-                              dilation=1),
+                ResidualBlock(cs[6] + cs[2], cs[6], ks=3, stride=1, dilation=1),
                 ResidualBlock(cs[6], cs[6], ks=3, stride=1, dilation=1),
             )
         ])
@@ -128,8 +133,7 @@ class MinkUNet(nn.Module):
         self.up3 = nn.ModuleList([
             BasicDeconvolutionBlock(cs[6], cs[7], ks=2, stride=2),
             nn.Sequential(
-                ResidualBlock(cs[7] + cs[1], cs[7], ks=3, stride=1,
-                              dilation=1),
+                ResidualBlock(cs[7] + cs[1], cs[7], ks=3, stride=1, dilation=1),
                 ResidualBlock(cs[7], cs[7], ks=3, stride=1, dilation=1),
             )
         ])
@@ -137,14 +141,12 @@ class MinkUNet(nn.Module):
         self.up4 = nn.ModuleList([
             BasicDeconvolutionBlock(cs[7], cs[8], ks=2, stride=2),
             nn.Sequential(
-                ResidualBlock(cs[8] + cs[0], cs[8], ks=3, stride=1,
-                              dilation=1),
+                ResidualBlock(cs[8] + cs[0], cs[8], ks=3, stride=1, dilation=1),
                 ResidualBlock(cs[8], cs[8], ks=3, stride=1, dilation=1),
             )
         ])
 
-        self.classifier = nn.Sequential(nn.Linear(cs[8],
-                                                  kwargs['num_classes']))
+        self.classifier = nn.Sequential(nn.Linear(cs[8], kwargs['num_classes']))
 
         self.point_transforms = nn.ModuleList([
             nn.Sequential(
@@ -179,7 +181,7 @@ class MinkUNet(nn.Module):
         x2 = self.stage2(x1)
         x3 = self.stage3(x2)
         x4 = self.stage4(x3)
-        
+
         y1 = self.up1[0](x4)
         y1 = torchsparse.cat([y1, x3])
         y1 = self.up1[1](y1)

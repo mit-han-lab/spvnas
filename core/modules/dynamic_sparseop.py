@@ -16,13 +16,14 @@ def make_divisible(x):
 
 # TBD: kernel_size = 1 special case.
 class SparseDynamicConv3d(nn.Module):
+
     def __init__(self,
                  inc,
                  outc,
                  kernel_size=3,
                  stride=1,
                  dilation=1,
-                 transpose=False):
+                 transposed=False):
         super().__init__()
         self.inc = inc
         self.outc = outc
@@ -33,22 +34,18 @@ class SparseDynamicConv3d(nn.Module):
         self.kernel = nn.Parameter(torch.zeros(
             self.k, inc, outc)) if self.k > 1 else nn.Parameter(
                 torch.zeros(inc, outc))
-        self.t = transpose
+        self.t = transposed
         self.init_weight()
         self.runtime_outc = None
         self.runtime_inc = None
         self.runtime_inc_constraint = None
 
         if kernel_size == 1:
-            assert not transpose
+            assert not transposed
 
-    def __repr__(self):
-        if not self.t:
-            return 'SparseDynamicConv3d(imax=%s, omax=%s, s=%s, d=%s)' % (
-                self.inc, self.outc, self.s, self.d)
-        else:
-            return 'SparseDynamicConv3dTranspose(imax=%s, omax=%s, s=%s, d=%s)' % (
-                self.inc, self.outc, self.s, self.d)
+    def extra_repr(self) -> str:
+        return 'imax={}, omax={}, s={}, d={}, t={}'.format(
+            self.inc, self.outc, self.s, self.d, self.t)
 
     def init_weight(self):
         std = 1. / math.sqrt(self.outc if self.t else self.inc * self.k)
@@ -69,13 +66,15 @@ class SparseDynamicConv3d(nn.Module):
     def forward(self, inputs):
         cur_kernel = self.kernel
         if self.runtime_inc_constraint is not None:
-            cur_kernel = cur_kernel[:, self.
-                                    runtime_inc_constraint, :] if self.ks > 1 else cur_kernel[
-                                        self.runtime_inc_constraint]
+            if self.ks > 1:
+                cur_kernel = cur_kernel[:, self.runtime_inc_constraint, :]
+            else:
+                cur_kernel = cur_kernel[self.runtime_inc_constraint]
         elif self.runtime_inc is not None:
-            cur_kernel = cur_kernel[:, torch.arange(
-                self.runtime_inc), :] if self.ks > 1 else cur_kernel[
-                    torch.arange(self.runtime_inc)]
+            if self.ks > 1:
+                cur_kernel = cur_kernel[:, torch.arange(self.runtime_inc), :]
+            else:
+                cur_kernel = cur_kernel[torch.arange(self.runtime_inc)]
         else:
             raise ValueError('Number of channels not specified!')
         cur_kernel = cur_kernel[..., torch.arange(self.runtime_outc)]
@@ -85,13 +84,13 @@ class SparseDynamicConv3d(nn.Module):
                           self.ks,
                           stride=self.s,
                           dilation=self.d,
-                          transpose=self.t)
+                          transposed=self.t)
 
 
 class SparseDynamicBatchNorm(nn.Module):
     SET_RUNNING_STATISTICS = False
 
-    def __init__(self, c, cr_bounds=[0.25, 1.0], eps=1e-5, momentum=0.1):
+    def __init__(self, c, cr_bounds=(0.25, 1.0), eps=1e-5, momentum=0.1):
         super().__init__()
         self.c = c
         self.eps = eps
@@ -108,13 +107,13 @@ class SparseDynamicBatchNorm(nn.Module):
         self.runtime_channel = channel
 
     def bn_foward(self, x, bn, feature_dim):
-        if bn.num_features == feature_dim or SparseDynamicBatchNorm.SET_RUNNING_STATISTICS:
+        if (bn.num_features == feature_dim
+                or SparseDynamicBatchNorm.SET_RUNNING_STATISTICS):
             return bn(x)
         else:
             exponential_average_factor = 0.0
 
             if bn.training and bn.track_running_stats:
-                # TODO: if statement only here to tell the jit to skip emitting this when it is None
                 if bn.num_batches_tracked is not None:
                     bn.num_batches_tracked += 1
                     if bn.momentum is None:  # use cumulative moving average
@@ -136,7 +135,7 @@ class SparseDynamicBatchNorm(nn.Module):
     def forward(self, inputs):
         output_features = self.bn_foward(inputs.F, self.bn, inputs.F.shape[-1])
         output_tensor = SparseTensor(output_features, inputs.C, inputs.s)
-        output_tensor.coord_maps = inputs.coord_maps
-        output_tensor.kernel_maps = inputs.kernel_maps
+        output_tensor.cmaps = inputs.cmaps
+        output_tensor.kmaps = inputs.kmaps
 
         return output_tensor
