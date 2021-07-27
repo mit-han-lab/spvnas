@@ -66,7 +66,7 @@ def main() -> None:
                 num_replicas=dist.size(),
                 rank=rank,
                 shuffle=(split == 'train'))
-                
+
         dataflow[split] = torch.utils.data.DataLoader(
             dataset[split],
             batch_size=configs.batch_size,
@@ -80,9 +80,7 @@ def main() -> None:
 
     if configs.distributed:
         model = torch.nn.parallel.DistributedDataParallel(
-            model,
-            device_ids=[local_rank],
-            find_unused_parameters=True)
+            model, device_ids=[local_rank], find_unused_parameters=True)
 
     criterion = builder.make_criterion()
     optimizer = builder.make_optimizer(model)
