@@ -73,13 +73,14 @@ def main() -> None:
             sampler=sampler,
             num_workers=configs.workers_per_gpu,
             pin_memory=True,
+            shuffle=(split == 'train' and not configs.distributed),
             collate_fn=dataset[split].collate_fn)
 
     model = builder.make_model().cuda()
 
     if configs.distributed:
         model = torch.nn.parallel.DistributedDataParallel(
-            model.cuda(),
+            model,
             device_ids=[local_rank],
             find_unused_parameters=True)
 
