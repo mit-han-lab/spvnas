@@ -92,7 +92,8 @@ def main() -> None:
                                    optimizer=optimizer,
                                    scheduler=scheduler,
                                    num_workers=configs.workers_per_gpu,
-                                   seed=seed)
+                                   seed=seed,
+                                   mixed_precision=configs.mixed_precision)
     trainer.train_with_defaults(
         dataflow['train'],
         num_epochs=configs.num_epochs,

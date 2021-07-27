@@ -3,6 +3,7 @@ from typing import Any, Callable, Dict
 import numpy as np
 import torch
 from torch import nn
+from torch.cuda import amp
 from torchpack.train import Trainer
 from torchpack.utils.typing import Optimizer, Scheduler
 
@@ -13,13 +14,15 @@ class SemanticKITTITrainer(Trainer):
 
     def __init__(self, model: nn.Module, criterion: Callable,
                  optimizer: Optimizer, scheduler: Scheduler, num_workers: int,
-                 seed: int) -> None:
+                 seed: int, mixed_precision: bool) -> None:
         self.model = model
         self.criterion = criterion
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.num_workers = num_workers
         self.seed = seed
+        self.mixed_precision = mixed_precision
+        self.loss_scaler = amp.GradScaler(enabled=self.mixed_precision)
         self.epoch_num = 1
 
     def _before_epoch(self) -> None:
@@ -38,15 +41,18 @@ class SemanticKITTITrainer(Trainer):
 
         inputs = _inputs['lidar']
         targets = feed_dict['targets'].F.long().cuda(non_blocking=True)
-        outputs = self.model(inputs)
+
+        with amp.autocast(enabled=self.mixed_precision):
+            outputs = self.model(inputs)
 
         if outputs.requires_grad:
             loss = self.criterion(outputs, targets)
             self.summary.add_scalar('loss', loss.item())
 
             self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
+            self.loss_scaler.scale(loss).backward()
+            self.loss_scaler.step(self.optimizer)
+            self.loss_scaler.update()
             self.scheduler.step()
         else:
             invs = feed_dict['inverse_map']
