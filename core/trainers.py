@@ -24,7 +24,9 @@ class SemanticKITTITrainer(Trainer):
 
     def _before_epoch(self) -> None:
         self.model.train()
-        self.dataflow.sampler.set_epoch(self.epoch_num - 1)
+        if isinstance(self.dataflow.sampler, torch.utils.data.distributed.DistributedSampler):
+            self.dataflow.sampler.set_epoch(self.epoch_num - 1)
+            
         self.dataflow.worker_init_fn = lambda worker_id: np.random.seed(
             self.seed + (self.epoch_num - 1) * self.num_workers + worker_id)
 
