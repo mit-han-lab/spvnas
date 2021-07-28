@@ -51,8 +51,10 @@ class SemanticKITTITrainer(Trainer):
         with amp.autocast(enabled=self.mixed_precision):
             outputs = self.model(inputs)
 
+            if outputs.requires_grad:
+                loss = self.criterion(outputs, targets)
+
         if outputs.requires_grad:
-            loss = self.criterion(outputs, targets)
             self.summary.add_scalar('loss', loss.item())
 
             self.optimizer.zero_grad()
