@@ -27,7 +27,7 @@ class SemanticKITTITrainer(Trainer):
         self.num_workers = num_workers
         self.seed = seed
         self.amp_enabled = amp_enabled
-        self.loss_scaler = amp.GradScaler(enabled=self.amp_enabled)
+        self.scaler = amp.GradScaler(enabled=self.amp_enabled)
         self.epoch_num = 1
 
     def _before_epoch(self) -> None:
@@ -56,9 +56,9 @@ class SemanticKITTITrainer(Trainer):
             self.summary.add_scalar('loss', loss.item())
 
             self.optimizer.zero_grad()
-            self.loss_scaler.scale(loss).backward()
-            self.loss_scaler.step(self.optimizer)
-            self.loss_scaler.update()
+            self.scaler.scale(loss).backward()
+            self.scaler.step(self.optimizer)
+            self.scaler.update()
             self.scheduler.step()
         else:
             invs = feed_dict['inverse_map']
@@ -84,12 +84,14 @@ class SemanticKITTITrainer(Trainer):
     def _state_dict(self) -> Dict[str, Any]:
         state_dict = {}
         state_dict['model'] = self.model.state_dict()
+        state_dict['scaler'] = self.scaler.state_dict()
         state_dict['optimizer'] = self.optimizer.state_dict()
         state_dict['scheduler'] = self.scheduler.state_dict()
         return state_dict
 
     def _load_state_dict(self, state_dict: Dict[str, Any]) -> None:
         self.model.load_state_dict(state_dict['model'])
+        self.scaler.load_state_dict(state_dict.pop('scaler'))
         self.optimizer.load_state_dict(state_dict['optimizer'])
         self.scheduler.load_state_dict(state_dict['scheduler'])
 
