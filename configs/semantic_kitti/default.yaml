@@ -9,7 +9,7 @@ train:
 
 dataset:
   name: semantic_kitti
-  root: /mnt/c/data/semantic_kitti/dataset/sequences
+  root: /dataset/semantic-kitti
   num_points: 80000
   voxel_size: 0.05
 
