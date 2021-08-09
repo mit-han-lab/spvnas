@@ -1,3 +1,3 @@
 workers_per_gpu: 8
-distributed: False
+distributed: True
 amp_enabled: True
