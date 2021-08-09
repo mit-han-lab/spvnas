@@ -83,7 +83,7 @@ def main() -> None:
                                    scheduler=scheduler,
                                    num_workers=configs.workers_per_gpu,
                                    seed=configs.train.seed,
-                                   mixed_precision=False)
+                                   amp_enabled=False)
     callbacks = Callbacks([
         SaverRestore(),
         MeanIoU(configs.data.num_classes, configs.data.ignore_label)

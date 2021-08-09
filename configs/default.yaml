@@ -1,3 +1,3 @@
 workers_per_gpu: 8
 distributed: False
-mixed_precision: True
+amp_enabled: True

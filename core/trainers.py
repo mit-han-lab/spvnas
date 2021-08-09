@@ -19,15 +19,15 @@ class SemanticKITTITrainer(Trainer):
                  scheduler: Scheduler,
                  num_workers: int,
                  seed: int,
-                 mixed_precision: bool = False) -> None:
+                 amp_enabled: bool = False) -> None:
         self.model = model
         self.criterion = criterion
         self.optimizer = optimizer
         self.scheduler = scheduler
         self.num_workers = num_workers
         self.seed = seed
-        self.mixed_precision = mixed_precision
-        self.loss_scaler = amp.GradScaler(enabled=self.mixed_precision)
+        self.amp_enabled = amp_enabled
+        self.loss_scaler = amp.GradScaler(enabled=self.amp_enabled)
         self.epoch_num = 1
 
     def _before_epoch(self) -> None:
@@ -46,7 +46,7 @@ class SemanticKITTITrainer(Trainer):
         inputs = _inputs['lidar']
         targets = feed_dict['targets'].F.long().cuda(non_blocking=True)
 
-        with amp.autocast(enabled=self.mixed_precision):
+        with amp.autocast(enabled=self.amp_enabled):
             outputs = self.model(inputs)
 
             if outputs.requires_grad:
