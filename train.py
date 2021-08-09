@@ -20,8 +20,6 @@ from core.trainers import SemanticKITTITrainer
 
 
 def main() -> None:
-    torch.backends.cudnn.benchmark = True
-
     parser = argparse.ArgumentParser()
     parser.add_argument('config', metavar='FILE', help='config file')
     parser.add_argument('--run-dir', metavar='DIR', help='run directory')
@@ -30,13 +28,11 @@ def main() -> None:
     configs.load(args.config, recursive=True)
     configs.update(opts)
 
-    rank = 0
-    local_rank = 0
     if configs.distributed:
         dist.init()
-        local_rank = dist.local_rank()
-        rank = dist.rank()
-        torch.cuda.set_device(local_rank)
+
+    torch.backends.cudnn.benchmark = True
+    torch.cuda.set_device(dist.local_rank())
 
     if args.run_dir is None:
         args.run_dir = auto_set_run_dir()
@@ -50,7 +46,8 @@ def main() -> None:
     if ('seed' not in configs.train) or (configs.train.seed is None):
         configs.train.seed = torch.initial_seed() % (2 ** 32 - 1)
 
-    seed = configs.train.seed + rank * configs.workers_per_gpu * configs.num_epochs
+    seed = configs.train.seed + dist.rank(
+    ) * configs.workers_per_gpu * configs.num_epochs
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -59,28 +56,25 @@ def main() -> None:
     dataset = builder.make_dataset()
     dataflow = {}
     for split in dataset:
-        sampler = None
-        if configs.distributed:
-            sampler = torch.utils.data.distributed.DistributedSampler(
-                dataset[split],
-                num_replicas=dist.size(),
-                rank=rank,
-                shuffle=(split == 'train'))
-
+        sampler = torch.utils.data.distributed.DistributedSampler(
+            dataset[split],
+            num_replicas=dist.size(),
+            rank=dist.rank(),
+            shuffle=(split == 'train'))
         dataflow[split] = torch.utils.data.DataLoader(
             dataset[split],
             batch_size=configs.batch_size,
             sampler=sampler,
             num_workers=configs.workers_per_gpu,
             pin_memory=True,
-            shuffle=(split == 'train' and not configs.distributed),
             collate_fn=dataset[split].collate_fn)
 
     model = builder.make_model().cuda()
-
     if configs.distributed:
         model = torch.nn.parallel.DistributedDataParallel(
-            model, device_ids=[local_rank], find_unused_parameters=True)
+            model,
+            device_ids=[dist.local_rank()],
+            find_unused_parameters=True)
 
     criterion = builder.make_criterion()
     optimizer = builder.make_optimizer(model)
@@ -91,8 +85,7 @@ def main() -> None:
                                    optimizer=optimizer,
                                    scheduler=scheduler,
                                    num_workers=configs.workers_per_gpu,
-                                   seed=seed,
-                                   mixed_precision=configs.mixed_precision)
+                                   seed=seed)
     trainer.train_with_defaults(
         dataflow['train'],
         num_epochs=configs.num_epochs,
