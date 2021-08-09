@@ -39,9 +39,9 @@ The code is built with following libraries:
 For easy installation, use [conda](https://docs.conda.io/projects/conda/en/latest/):
 
 ```
-conda create -n torch python=3.6
+conda create -n torch python=3.7
 conda activate torch
-conda install pytorch==1.7.0 torchvision==0.8.0 torchaudio==0.7.0 cudatoolkit=10.2 -c pytorch
+conda install pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch
 conda install numba opencv
 pip install torchpack
 pip install --upgrade git+https://github.com/mit-han-lab/torchsparse.git
@@ -119,6 +119,8 @@ For example, to train the model [SemanticKITTI_val_SPVCNN@30GMACs](https://hanla
 ```bash
 torchpack dist-run -np [num_of_gpus] python train.py configs/semantic_kitti/spvcnn/cr0p5.yaml
 ```
+
+To train the model in a non-distributed enviornment without MPI, i.e. on a single GPU, you may set the `distributed` parameter to `False` in `configs/default.yaml`.
 
 ### Searching
 
