@@ -20,11 +20,6 @@ from core.trainers import SemanticKITTITrainer
 
 
 def main() -> None:
-    dist.init()
-
-    torch.backends.cudnn.benchmark = True
-    torch.cuda.set_device(dist.local_rank())
-
     parser = argparse.ArgumentParser()
     parser.add_argument('config', metavar='FILE', help='config file')
     parser.add_argument('--run-dir', metavar='DIR', help='run directory')
@@ -32,6 +27,12 @@ def main() -> None:
 
     configs.load(args.config, recursive=True)
     configs.update(opts)
+
+    if configs.distributed:
+        dist.init()
+
+    torch.backends.cudnn.benchmark = True
+    torch.cuda.set_device(dist.local_rank())
 
     if args.run_dir is None:
         args.run_dir = auto_set_run_dir()
@@ -68,11 +69,10 @@ def main() -> None:
             pin_memory=True,
             collate_fn=dataset[split].collate_fn)
 
-    model = builder.make_model()
-    model = torch.nn.parallel.DistributedDataParallel(
-        model.cuda(),
-        device_ids=[dist.local_rank()],
-        find_unused_parameters=True)
+    model = builder.make_model().cuda()
+    if configs.distributed:
+        model = torch.nn.parallel.DistributedDataParallel(
+            model, device_ids=[dist.local_rank()], find_unused_parameters=True)
 
     criterion = builder.make_criterion()
     optimizer = builder.make_optimizer(model)
@@ -83,7 +83,8 @@ def main() -> None:
                                    optimizer=optimizer,
                                    scheduler=scheduler,
                                    num_workers=configs.workers_per_gpu,
-                                   seed=seed)
+                                   seed=seed,
+                                   amp_enabled=configs.amp_enabled)
     trainer.train_with_defaults(
         dataflow['train'],
         num_epochs=configs.num_epochs,
