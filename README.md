@@ -120,7 +120,11 @@ For example, to train the model [SemanticKITTI_val_SPVCNN@30GMACs](https://hanla
 torchpack dist-run -np [num_of_gpus] python train.py configs/semantic_kitti/spvcnn/cr0p5.yaml
 ```
 
-To train the model in a non-distributed enviornment without MPI, i.e. on a single GPU, you may set the `distributed` parameter to `False` in `configs/default.yaml`.
+To train the model in a non-distributed environment without MPI, i.e. on a single GPU, you may directly call `train.py` with the `--distributed False` argument:
+
+```bash
+python train.py configs/semantic_kitti/spvcnn/cr0p5.yaml --distributed False
+```
 
 ### Searching
 
