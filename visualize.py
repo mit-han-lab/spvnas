@@ -9,9 +9,10 @@ import os
 
 import mayavi.mlab as mlab
 import numpy as np
+import open3d as o3d
 import torch
 from torchsparse import SparseTensor
-from torchsparse.utils import sparse_quantize
+from torchsparse.utils.quantize import sparse_quantize
 
 from model_zoo import minkunet, spvcnn, spvnas_specialized
 
@@ -39,11 +40,10 @@ def process_point_cloud(input_point_cloud, input_labels=None, voxel_size=0.05):
         out_pc = input_point_cloud
         pc_ = pc_
 
-    inds, labels, inverse_map = sparse_quantize(pc_,
-                                                feat_,
-                                                labels_,
-                                                return_index=True,
-                                                return_invs=True)
+    coords_, inds, inverse_map = sparse_quantize(pc_,
+                                                 return_index=True,
+                                                 return_inverse=True)
+
     pc = np.zeros((inds.shape[0], 4))
     pc[:, :3] = pc_[inds]
 
@@ -193,12 +193,120 @@ def draw_lidar(pc,
     return fig
 
 
+# visualize by open3d
+label_name_mapping = {
+    0: 'unlabeled',
+    1: 'outlier',
+    10: 'car',
+    11: 'bicycle',
+    13: 'bus',
+    15: 'motorcycle',
+    16: 'on-rails',
+    18: 'truck',
+    20: 'other-vehicle',
+    30: 'person',
+    31: 'bicyclist',
+    32: 'motorcyclist',
+    40: 'road',
+    44: 'parking',
+    48: 'sidewalk',
+    49: 'other-ground',
+    50: 'building',
+    51: 'fence',
+    52: 'other-structure',
+    60: 'lane-marking',
+    70: 'vegetation',
+    71: 'trunk',
+    72: 'terrain',
+    80: 'pole',
+    81: 'traffic-sign',
+    99: 'other-object',
+    252: 'moving-car',
+    253: 'moving-bicyclist',
+    254: 'moving-person',
+    255: 'moving-motorcyclist',
+    256: 'moving-on-rails',
+    257: 'moving-bus',
+    258: 'moving-truck',
+    259: 'moving-other-vehicle'
+}
+
+kept_labels = [
+    'road', 'sidewalk', 'parking', 'other-ground', 'building', 'car', 'truck',
+    'bicycle', 'motorcycle', 'other-vehicle', 'vegetation', 'trunk', 'terrain',
+    'person', 'bicyclist', 'motorcyclist', 'fence', 'pole', 'traffic-sign'
+]
+
+
+class BinVisualizer:
+
+    def __init__(self):
+        self.points = np.zeros((0, 3), dtype=np.float32)
+        self.sem_label = np.zeros((0, 1), dtype=np.uint32)  # [m, 1]: label
+        self.sem_label_color = np.zeros((0, 3),
+                                        dtype=np.float32)  # [m ,3]: color
+
+        # label map
+        reverse_label_name_mapping = {}
+        self.label_map = np.zeros(260)
+        cnt = 0
+        for label_id in label_name_mapping:
+            if label_id > 250:
+                if label_name_mapping[label_id].replace('moving-',
+                                                        '') in kept_labels:
+                    self.label_map[label_id] = reverse_label_name_mapping[
+                        label_name_mapping[label_id].replace('moving-', '')]
+                else:
+                    self.label_map[label_id] = 255
+            elif label_id == 0:
+                self.label_map[label_id] = 255
+            else:
+                if label_name_mapping[label_id] in kept_labels:
+                    self.label_map[label_id] = cnt
+                    reverse_label_name_mapping[
+                        label_name_mapping[label_id]] = cnt
+                    cnt += 1
+                else:
+                    self.label_map[label_id] = 255
+        self.reverse_label_name_mapping = reverse_label_name_mapping
+
+    def read_pc_label(self, points, label):
+        assert points.shape[0] == label.shape[0]
+        label = label.reshape(-1)
+        self.sem_label = label
+        self.points = points[:, :3]
+
+    def show_cloud(self, window_name='open3d'):
+        # make color table
+        color_dict = {}
+        for i in range(19):
+            color_dict[i] = cmap[i, :]
+        color_dict[255] = [0, 0, 0, 255]
+
+        pc = o3d.geometry.PointCloud()
+        pc.points = o3d.utility.Vector3dVector(self.points)
+        cloud_color = [color_dict[i] for i in list(self.sem_label)]
+        self.sem_label_color = np.array(cloud_color).reshape(
+            (-1, 4))[:, :3] / 255
+        pc.colors = o3d.utility.Vector3dVector(self.sem_label_color)
+
+        o3d.visualization.draw_geometries([pc], window_name)
+
+    def run_visualize(self, points, label, window_name):
+        self.read_pc_label(points, label)
+        self.show_cloud(window_name)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--velodyne-dir', type=str, default='sample_data')
     parser.add_argument('--model',
                         type=str,
                         default='SemanticKITTI_val_SPVNAS@65GMACs')
+    parser.add_argument('--visualize_backend',
+                        type=str,
+                        default='open3d',
+                        help='visualization beckend, default=open3d')
     args = parser.parse_args()
     output_dir = os.path.join(args.velodyne_dir, 'outputs')
     os.makedirs(output_dir, exist_ok=True)
@@ -229,7 +337,7 @@ if __name__ == '__main__':
 
         pc = np.fromfile(f'{args.velodyne_dir}/{point_cloud_name}',
                          dtype=np.float32).reshape(-1, 4)
-        if os.path.exists(label_file_name):
+        if os.path.exists(f'{args.velodyne_dir}/{label_file_name}'):
             label = np.fromfile(f'{args.velodyne_dir}/{label_file_name}',
                                 dtype=np.int32)
         else:
@@ -239,8 +347,22 @@ if __name__ == '__main__':
         outputs = model(inputs)
         predictions = outputs.argmax(1).cpu().numpy()
         predictions = predictions[feed_dict['inverse_map']]
-        fig = draw_lidar(feed_dict['pc'], predictions.astype(np.int32))
-        mlab.savefig(f'{output_dir}/{vis_file_name}')
-        if label is not None:
-            fig = draw_lidar(feed_dict['pc'], feed_dict['targets_mapped'])
-            mlab.savefig(f'{output_dir}/{gt_file_name}')
+
+        if args.visualize_backend == 'mayavi':
+            fig = draw_lidar(feed_dict['pc'], predictions.astype(np.int32))
+            mlab.savefig(f'{output_dir}/{vis_file_name}')
+            if label is not None:
+                fig = draw_lidar(feed_dict['pc'], feed_dict['targets_mapped'])
+                mlab.savefig(f'{output_dir}/{gt_file_name}')
+        elif args.visualize_backend == 'open3d':
+            # visualize prediction
+            bin_vis = BinVisualizer()
+            bin_vis.run_visualize(feed_dict['pc'], predictions.astype(np.int32),
+                                  'Predictions')
+            if label is not None:
+                bin_vis = BinVisualizer()
+                bin_vis.run_visualize(feed_dict['pc'],
+                                      feed_dict['targets_mapped'],
+                                      'Ground turth')
+        else:
+            raise NotImplementedError
