@@ -20,11 +20,6 @@ from model_zoo import minkunet, spvcnn, spvnas_specialized
 
 
 def main() -> None:
-    dist.init()
-
-    torch.backends.cudnn.benchmark = True
-    torch.cuda.set_device(dist.local_rank())
-
     parser = argparse.ArgumentParser()
     parser.add_argument('config', metavar='FILE', help='config file')
     parser.add_argument('--run-dir', metavar='DIR', help='run directory')
@@ -33,6 +28,12 @@ def main() -> None:
 
     configs.load(args.config, recursive=True)
     configs.update(opts)
+
+    if configs.distributed:
+        dist.init()
+
+        torch.backends.cudnn.benchmark = True
+        torch.cuda.set_device(dist.local_rank())
 
     if args.run_dir is None:
         args.run_dir = auto_set_run_dir()
@@ -67,10 +68,11 @@ def main() -> None:
     else:
         raise NotImplementedError
 
-    model = torch.nn.parallel.DistributedDataParallel(
-        model.cuda(),
-        device_ids=[dist.local_rank()],
-        find_unused_parameters=True)
+    if configs.distributed:
+        model = torch.nn.parallel.DistributedDataParallel(
+            model.cuda(),
+            device_ids=[dist.local_rank()],
+            find_unused_parameters=True)
     model.eval()
 
     criterion = builder.make_criterion()
@@ -95,35 +97,35 @@ def main() -> None:
     trainer.before_epoch()
 
     model.eval()
+    with torch.no_grad():
+        for feed_dict in tqdm(dataflow['test'], desc='eval'):
+            _inputs = {}
+            for key, value in feed_dict.items():
+                if 'name' not in key:
+                    _inputs[key] = value.cuda()
 
-    for feed_dict in tqdm(dataflow['test'], desc='eval'):
-        _inputs = {}
-        for key, value in feed_dict.items():
-            if 'name' not in key:
-                _inputs[key] = value.cuda()
+            inputs = _inputs['lidar']
+            targets = feed_dict['targets'].F.long().cuda(non_blocking=True)
+            outputs = model(inputs)
 
-        inputs = _inputs['lidar']
-        targets = feed_dict['targets'].F.long().cuda(non_blocking=True)
-        outputs = model(inputs)
+            invs = feed_dict['inverse_map']
+            all_labels = feed_dict['targets_mapped']
+            _outputs = []
+            _targets = []
+            for idx in range(invs.C[:, -1].max() + 1):
+                cur_scene_pts = (inputs.C[:, -1] == idx).cpu().numpy()
+                cur_inv = invs.F[invs.C[:, -1] == idx].cpu().numpy()
+                cur_label = (all_labels.C[:, -1] == idx).cpu().numpy()
+                outputs_mapped = outputs[cur_scene_pts][cur_inv].argmax(1)
+                targets_mapped = all_labels.F[cur_label]
+                _outputs.append(outputs_mapped)
+                _targets.append(targets_mapped)
+            outputs = torch.cat(_outputs, 0)
+            targets = torch.cat(_targets, 0)
+            output_dict = {'outputs': outputs, 'targets': targets}
+            trainer.after_step(output_dict)
 
-        invs = feed_dict['inverse_map']
-        all_labels = feed_dict['targets_mapped']
-        _outputs = []
-        _targets = []
-        for idx in range(invs.C[:, -1].max() + 1):
-            cur_scene_pts = (inputs.C[:, -1] == idx).cpu().numpy()
-            cur_inv = invs.F[invs.C[:, -1] == idx].cpu().numpy()
-            cur_label = (all_labels.C[:, -1] == idx).cpu().numpy()
-            outputs_mapped = outputs[cur_scene_pts][cur_inv].argmax(1)
-            targets_mapped = all_labels.F[cur_label]
-            _outputs.append(outputs_mapped)
-            _targets.append(targets_mapped)
-        outputs = torch.cat(_outputs, 0)
-        targets = torch.cat(_targets, 0)
-        output_dict = {'outputs': outputs, 'targets': targets}
-        trainer.after_step(output_dict)
-
-    trainer.after_epoch()
+        trainer.after_epoch()
 
 
 if __name__ == '__main__':
