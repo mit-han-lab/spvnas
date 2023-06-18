@@ -14,6 +14,8 @@ SPVNAS achieves state-of-the-art performance on the SemanticKITTI [leaderboard](
 
 ## News
 
+**\[2023-06\]** We announce [TorchSparse++](https://github.com/mit-han-lab/torchsparse), the state-of-the-art GPU library for sparse point cloud convolutions. SPVNAS is now backed by TorchSparse++.
+
 **\[2020-09\]** We release the baseline training code for SPVCNN and MinkowskiNet.
 
 **\[2020-08\]** Please check out our ECCV 2020 tutorial on [AutoML for Efficient 3D Deep Learning](https://www.youtube.com/watch?v=zzJR07LMXxs), which summarizes the algorithm in this codebase.
@@ -142,3 +144,4 @@ If you use this code for your research, please cite our paper.
   year = {2020}
 }
 ```
+
