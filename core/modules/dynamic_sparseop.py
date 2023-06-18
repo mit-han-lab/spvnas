@@ -16,7 +16,7 @@ def make_divisible(x):
 
 # TBD: kernel_size = 1 special case.
 class SparseDynamicConv3d(nn.Module):
-    def __init__(self, inc, outc, kernel_size=3, stride=1, dilation=1, transpose=False):
+    def __init__(self, inc, outc, kernel_size=3, stride=1, dilation=1, transposed=False):
         super().__init__()
         self.inc = inc
         self.outc = outc
@@ -27,14 +27,14 @@ class SparseDynamicConv3d(nn.Module):
         self.kernel = (
             nn.Parameter(torch.zeros(self.k, inc, outc)) if self.k > 1 else nn.Parameter(torch.zeros(inc, outc))
         )
-        self.t = transpose
+        self.t = transposed
         self.init_weight()
         self.runtime_outc = None
         self.runtime_inc = None
         self.runtime_inc_constraint = None
 
         if kernel_size == 1:
-            assert not transpose
+            assert not transposed
 
     def __repr__(self):
         if not self.t:

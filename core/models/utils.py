@@ -82,7 +82,8 @@ def point_to_voxel(x, z):
         z._caches.idx_query[x.s] = idx_query
     else:
         idx_query = z._caches.idx_query[x.s]
-
+    # Haotian: This impl. is not elegant
+    idx_query = idx_query.clamp_(0)
     sparse_feat = torch_scatter.scatter_mean(z.F, idx_query.long(), dim=0)
     new_tensor = SparseTensor(sparse_feat, x.C, x.s)
     new_tensor._caches = x._caches

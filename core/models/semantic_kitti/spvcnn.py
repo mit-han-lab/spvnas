@@ -187,7 +187,7 @@ class SPVCNN(nn.Module):
         z = PointTensor(x.F, x.C.float())
 
         x0 = initial_voxelize(z, self.pres, self.vres)
-
+        
         x0 = self.stem(x0)
         z0 = voxel_to_point(x0, z, nearest=False)
         z0.F = z0.F
