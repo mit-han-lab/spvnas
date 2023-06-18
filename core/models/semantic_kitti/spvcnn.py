@@ -1,9 +1,9 @@
 import torchsparse
 import torchsparse.nn as spnn
 from torch import nn
-from torchsparse import PointTensor
+from torchsparse import SparseTensor
 
-from core.models.utils import initial_voxelize, point_to_voxel, voxel_to_point
+from core.models.utils import *
 
 __all__ = ['SPVCNN']
 
