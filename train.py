@@ -18,6 +18,9 @@ from core import builder
 from core.callbacks import MeanIoU
 from core.trainers import SemanticKITTITrainer
 
+import torchsparse.nn.functional as F
+
+F.set_conv_mode(2)
 
 def main() -> None:
     parser = argparse.ArgumentParser()

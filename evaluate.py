@@ -18,6 +18,9 @@ from core.callbacks import MeanIoU
 from core.trainers import SemanticKITTITrainer
 from model_zoo import minkunet, spvcnn, spvnas_specialized
 
+import torchsparse.nn.functional as F
+
+F.set_conv_mode(2)
 
 def main() -> None:
     parser = argparse.ArgumentParser()
@@ -112,10 +115,10 @@ def main() -> None:
             all_labels = feed_dict['targets_mapped']
             _outputs = []
             _targets = []
-            for idx in range(invs.C[:, -1].max() + 1):
-                cur_scene_pts = (inputs.C[:, -1] == idx).cpu().numpy()
-                cur_inv = invs.F[invs.C[:, -1] == idx].cpu().numpy()
-                cur_label = (all_labels.C[:, -1] == idx).cpu().numpy()
+            for idx in range(invs.C[:, 0].max() + 1):
+                cur_scene_pts = (inputs.C[:, 0] == idx).cpu().numpy()
+                cur_inv = invs.F[invs.C[:, 0] == idx].cpu().numpy()
+                cur_label = (all_labels.C[:, 0] == idx).cpu().numpy()
                 outputs_mapped = outputs[cur_scene_pts][cur_inv].argmax(1)
                 targets_mapped = all_labels.F[cur_label]
                 _outputs.append(outputs_mapped)

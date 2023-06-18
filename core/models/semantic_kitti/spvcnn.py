@@ -1,9 +1,9 @@
 import torchsparse
 import torchsparse.nn as spnn
 from torch import nn
-from torchsparse import PointTensor
+from torchsparse import SparseTensor
 
-from core.models.utils import initial_voxelize, point_to_voxel, voxel_to_point
+from core.models.utils import *
 
 __all__ = ['SPVCNN']
 
@@ -187,7 +187,7 @@ class SPVCNN(nn.Module):
         z = PointTensor(x.F, x.C.float())
 
         x0 = initial_voxelize(z, self.pres, self.vres)
-
+        
         x0 = self.stem(x0)
         z0 = voxel_to_point(x0, z, nearest=False)
         z0.F = z0.F

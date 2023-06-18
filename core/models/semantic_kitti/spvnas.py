@@ -6,9 +6,9 @@ import torch
 import torch.nn as nn
 import torchsparse
 import torchsparse.nn as spnn
-from torchsparse import PointTensor, SparseTensor
+from torchsparse import SparseTensor
 
-from core.models.utils import point_to_voxel, voxel_to_point
+from core.models.utils import *
 from core.modules.layers import (DynamicConvolutionBlock,
                                  DynamicDeconvolutionBlock, DynamicLinear,
                                  DynamicLinearBlock, DynamicResidualBlock,
@@ -281,14 +281,15 @@ class SPVNAS(RandomNet):
     def determinize(self, local_rank=0):
         # Get the determinized SPVNAS network by running dummy inference.
         self.eval()
+        device = next(self.parameters()).device
 
         sample_feat = torch.randn(1000, 4)
         sample_coord = torch.randn(1000, 4).random_(997)
-        sample_coord[:, -1] = 0
+        sample_coord[:, 0] = 0
 
         if torch.cuda.is_available():
             x = SparseTensor(sample_feat,
-                             sample_coord.int()).to('cuda:%d' % local_rank)
+                             sample_coord.int()).to(str(device))#'cuda:%d' % local_rank)
         else:
             x = SparseTensor(sample_feat, sample_coord.int())
         with torch.no_grad():
