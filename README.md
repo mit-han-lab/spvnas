@@ -2,14 +2,6 @@
 
 ### [video](https://youtu.be/zzJR07LMXxs) | [paper](https://arxiv.org/abs/2007.16100) | [website](http://spvnas.mit.edu/) [![](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/mit-han-lab/spvnas/blob/master/tutorial.ipynb)
 
-[Searching Efficient 3D Architectures with Sparse Point-Voxel Convolution](https://arxiv.org/abs/2007.16100)
-
-[Haotian Tang\*](http://kentang.net/), [Zhijian Liu\*](http://zhijianliu.com/), Shengyu Zhao, Yujun Lin, [Ji Lin](http://linji.me/), [Hanrui Wang](http://hanruiwang.me/), [Song Han](https://songhan.mit.edu/)
-
-ECCV 2020
-
-<img src="https://hanlab.mit.edu/projects/spvnas/figures/spvnas_vs_mink.gif" width="1080">
-
 ## News
 
 * **(2020/9)** We release the baseline training code for SPVCNN and MinkowskiNet.
