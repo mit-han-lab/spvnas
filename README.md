@@ -10,15 +10,15 @@ ECCV 2020
 
 <img src="https://hanlab.mit.edu/projects/spvnas/figures/spvnas_vs_mink.gif" width="1080">
 
-SPVNAS achieves state-of-the-art performance on the SemanticKITTI [leaderboard](http://semantic-kitti.org/tasks.html#semseg) (as of July 2020) and outperforms [MinkowskiNet](https://arxiv.org/abs/1904.08755) with **3x speedup, 8x MACs reduction**.
-
 ## News
 
-**\[2020-09\]** We release the baseline training code for SPVCNN and MinkowskiNet.
+* **(2020/9)** We release the baseline training code for SPVCNN and MinkowskiNet.
 
-**\[2020-08\]** Please check out our ECCV 2020 tutorial on [AutoML for Efficient 3D Deep Learning](https://www.youtube.com/watch?v=zzJR07LMXxs), which summarizes the algorithm in this codebase.
+* **(2020/8)** Please check out our ECCV 2020 tutorial on [AutoML for Efficient 3D Deep Learning](https://www.youtube.com/watch?v=zzJR07LMXxs), which summarizes the algorithm in this codebase.
 
-**\[2020-07\]** Our paper is accepted to ECCV 2020.
+* SPVNAS achieves state-of-the-art performance on the SemanticKITTI [leaderboard](http://semantic-kitti.org/tasks.html#semseg) (as of July 2020) and outperforms [MinkowskiNet](https://arxiv.org/abs/1904.08755) with **3x speedup, 8x MACs reduction**.
+
+* **(2020/7)** Our paper is accepted to ECCV 2020.
 
 ## Usage
 
